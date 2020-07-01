@@ -28,12 +28,12 @@ class BetFairAPI:
     sport_event_filter = betfairlightweight.filters.market_filter(event_type_ids=[sport_event_type_id])
     sport_events = self.trading.betting.list_events(filter=sport_event_filter)
 
-    current_markets_available = pd.DataFrame({
+    current_markets_available_df = pd.DataFrame({
         'Event Name': [event_object.event.name for event_object in sport_events],
         'Event ID': [event_object.event.id for event_object in sport_events],
         'Market Count': [event_object.market_count for event_object in sport_events]
     })  
-    return current_markets_available
+    return current_markets_available_df
 
 
   def get_event_markets(self, eventID):
@@ -41,12 +41,12 @@ class BetFairAPI:
     market_catalogue_filter = betfairlightweight.filters.market_filter(event_ids=[eventID])
     market_catalogues = self.trading.betting.list_market_catalogue( filter=market_catalogue_filter, max_results='100', sort='FIRST_TO_START')
 
-    market_types = pd.DataFrame({
+    market_types_df = pd.DataFrame({
       'Market Name': [market_cat_object.market_name for market_cat_object in market_catalogues],
       'Market ID': [market_cat_object.market_id for market_cat_object in market_catalogues],
       'Total Matched': [market_cat_object.total_matched for market_cat_object in market_catalogues],
     })
-    return market_types
+    return market_types_df
 
 
   def get_runners_market_data(self, market_id, price_data):
@@ -65,12 +65,18 @@ class BetFairAPI:
     last_prices_traded = [runner_book.last_price_traded for runner_book in runners]
     total_matched = [runner_book.total_matched for runner_book in runners]
 
-    runners_data = pd.DataFrame({
+    runners_df = pd.DataFrame({
         'Selection ID': selection_ids,
         'Last Price Traded': last_prices_traded,
         'Total Matched': total_matched,
     })
-    return runners_data
+    return runners_df
+
+
+def price_to_probability_list(runners_df):
+    ''' Returns probability for runners dataframe'''
+    lpt_list=runners_df['Last Price Traded'].tolist()
+    return [round(((1/lpt) * 100), 2) for lpt in lpt_list] 
 
 
 '''
