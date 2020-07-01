@@ -58,6 +58,9 @@ class BetFairAPI:
           EX_ALL_OFFERS - EX_ALL_OFFERS trumps EX_BEST_OFFERS if both settings are present
           EX_TRADED - Amount traded on the exchange.
     '''
+    if price_data not in ['SP_AVAILABLE', 'SP_TRADED', 'EX_BEST_OFFERS', 'EX_ALL_OFFERS', 'EX_TRADED']:
+        raise Exception('Invalid price_data for get_runners_market_data() check function comments.')
+    
     price_filter = betfairlightweight.filters.price_projection(price_data=[price_data])
     market_book = self.trading.betting.list_market_book(market_ids=[market_id], price_projection=price_filter)[0]
     runners = market_book.runners
@@ -73,10 +76,10 @@ class BetFairAPI:
     return runners_df
 
 
-def price_to_probability_list(runners_df):
-    ''' Returns probability for runners dataframe'''
-    lpt_list=runners_df['Last Price Traded'].tolist()
-    return [round(((1/lpt) * 100), 2) for lpt in lpt_list] 
+  def price_to_probability_list(self, runners_df):
+      ''' Returns probability for runners dataframe'''
+      lpt_list=runners_df['Last Price Traded'].tolist()
+      return [round(((1/lpt) * 100), 2) for lpt in lpt_list] 
 
 
 '''
