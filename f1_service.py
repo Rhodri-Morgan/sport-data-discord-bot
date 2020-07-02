@@ -19,16 +19,25 @@ def daily_breakdown(sc, daily_breakdown_posted):
     
     if not daily_breakdown_posted and current_time == datetime.datetime.strptime("12:00","%H:%M"):
         daily_breakdown_posted = True
-        current_datetime_str = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
         world_drivers_champion_probabilities = f1_betting_collector.get_championship_outright_winner_probabilities()['Winner - Drivers Championship']
+        world_constructors_champion_probabilities = f1_betting_collector.get_championship_outright_winner_probabilities()['Winner - Constructors Championship']
         f1_data_processor.save_world_drivers_champion_data({current_datetime_str[:10] : world_drivers_champion_probabilities})
+        f1_data_processor.save_world_constructors_champion_data({current_datetime_str[:10] : world_constructors_champion_probabilities})
         # Now ready for more complex analysis and posting to discord
     elif current_time == datetime.datetime.strptime("00:00","%H:%M"):
         daily_breakdown_posted = False
     
     s.enter(daily_breakdown_timeout, 1, daily_breakdown, (sc, daily_breakdown_posted))
 
-
+'''
 s = sched.scheduler(time.time, time.sleep)
 s.enter(daily_breakdown_timeout, 1, daily_breakdown, (s, daily_breakdown_posted))
 s.run()
+'''
+
+# Testing area acting as if it is 1200 for daily_breakdown function
+current_datetime_str = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+world_drivers_champion_probabilities = f1_betting_collector.get_championship_outright_winner_probabilities()['Winner - Drivers Championship']
+world_constructors_champion_probabilities = f1_betting_collector.get_championship_outright_winner_probabilities()['Winner - Constructors Championship']
+f1_data_processor.save_world_drivers_champion_data({current_datetime_str[:10] : world_drivers_champion_probabilities})
+f1_data_processor.save_world_constructors_champion_data({current_datetime_str[:10] : world_constructors_champion_probabilities})
