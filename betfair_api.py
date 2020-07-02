@@ -86,8 +86,8 @@ class BetFairAPI:
         # In the future add functionality for driver/team name
         selection_id = runners_df.iloc[row]['Selection ID']
         last_price_traded = runners_df.iloc[row]['Last Price Traded']
-        if last_price_traded is None or math.isnan(last_price_traded):
-          probability_dict[selection_id] = None
+        if last_price_traded is None:
+          probability_dict[selection_id] = math.nan
         else:
           probability_dict[selection_id] = round(((1/last_price_traded) * 100), 2)
       return probability_dict 

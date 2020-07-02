@@ -13,6 +13,18 @@ with open(os.path.join(os.getcwd(), 'credentials.json')) as f:
   credentials = json.loads(f.read())['discord']
 
 
+@loop(seconds=5)
+async def post_f1_daily_update():
+  print('Running...')
+  channel = bot.get_channel(credentials['f1-channel'])
+  temp_data_path = os.path.join(os.getcwd(), 'temp_f1_daily_update')
+  if os.path.exists(temp_data_path):
+    with open(os.path.join(temp_data_path, 'send.json')) as f:
+       temp_data = json.load(f)
+  await channel.send(temp_data['message'])
+  # shutil.rmtree(temp_data_path)
+
+
 @loop(seconds=1)
 async def post_f1_update():
   '''Posts an update to discord for F1 composing of data, images, etc'''
@@ -36,6 +48,7 @@ async def post_f1_update():
 async def on_ready():
     '''Spools up services/background tasks for discord bot'''
     post_f1_update.start()
+    post_f1_daily_update.start()
 
 
 bot.run(credentials['token'])
