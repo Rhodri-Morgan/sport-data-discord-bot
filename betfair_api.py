@@ -2,6 +2,7 @@ import betfairlightweight
 from betfairlightweight import filters
 import pandas as pd
 import numpy as np
+import math
 import os
 import datetime
 import json
@@ -31,8 +32,10 @@ class BetFairAPI:
     current_markets_available_df = pd.DataFrame({
         'Event Name': [event_object.event.name for event_object in sport_events],
         'Event ID': [event_object.event.id for event_object in sport_events],
-        'Market Count': [event_object.market_count for event_object in sport_events]
+        'Market Count': [event_object.market_count for event_object in sport_events],
+        'Datetime': [event_object.event.open_date for event_object in sport_events]
     })  
+    current_markets_available_df['Datetime'] = pd.to_datetime(current_markets_available_df['Datetime'], format="%Y-%m-%d %H:%M:%S")
     return current_markets_available_df
 
 
@@ -76,22 +79,20 @@ class BetFairAPI:
     return runners_df
 
 
-  def price_to_probability_list(self, runners_df):
+  def covert_price_to_probability(self, runners_df):
       ''' Returns probability for runners dataframe'''
-      lpt_list=runners_df['Last Price Traded'].tolist()
-      return [round(((1/lpt) * 100), 2) for lpt in lpt_list] 
+      probability_dict = {}
+      for row in range(runners_df.shape[0]):
+        # In the future add functionality for driver/team name
+        selection_id = runners_df.iloc[row]['Selection ID']
+        last_price_traded = runners_df.iloc[row]['Last Price Traded']
+        if last_price_traded is None or math.isnan(last_price_traded):
+          probability_dict[selection_id] = None
+        else:
+          probability_dict[selection_id] = round(((1/last_price_traded) * 100), 2)
+      return probability_dict 
+    
 
-
-'''
-Example functionality of betfair interface
-
-betfair = BetFairAPI()                                                 # Betfair object
-print(betfair.get_event_id('Motor Sport'))                             # Motor Sport
-print()    
-print(betfair.get_event_markets(29570037))                             # F1 Outrights
-print()    
-print(betfair.get_runners_market_data(1.164937202, 'SP_TRADED'))       # Winner - Drivers Championship, Amount traded in the BSP auction
-'''
 
 '''
 Get runner meta data
