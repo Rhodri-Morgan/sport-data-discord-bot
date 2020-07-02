@@ -28,6 +28,7 @@ class F1BettingCollector:
 
 
     def get_next_race_probabilities(self):
+        ''' Gets the next race probabilities for all markets, returns dict with market name as key and proabilities as values '''
         next_race_dict = {}
         next_race_datetime = self.f1_meta.get_race_datetime(self.f1_meta.get_next_race())
         next_race_markets = self.f1_markets.get_next_f1_race_markets(next_race_datetime)
