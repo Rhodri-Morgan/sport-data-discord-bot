@@ -17,43 +17,29 @@ class BetFairAPI:
 
     self.trading = betfairlightweight.APIClient(username=credentials['username'],
                                                 password=credentials['password'],
-                                                app_key=credentials['app_key'],
+                                                app_key=credentials['delayed_app_key'],
                                                 certs=certifications)
     self.trading.login()
 
 
-  def get_event_id(self, sport):
-    ''' Returns the eventID for a sport '''
+  def get_events(self, sport):
+    ''' Returns event_result objects for a sport '''
     sport_filter = betfairlightweight.filters.market_filter(text_query=sport)
     sport_event_type_id = self.trading.betting.list_event_types(filter=sport_filter)[0].event_type.id
     sport_event_filter = betfairlightweight.filters.market_filter(event_type_ids=[sport_event_type_id])
-    sport_events = self.trading.betting.list_events(filter=sport_event_filter)
-
-    current_markets_available_df = pd.DataFrame({
-        'Event Name': [event_object.event.name for event_object in sport_events],
-        'Event ID': [event_object.event.id for event_object in sport_events],
-        'Market Count': [event_object.market_count for event_object in sport_events],
-        'Datetime': [event_object.event.open_date for event_object in sport_events]
-    })  
-    current_markets_available_df['Datetime'] = pd.to_datetime(current_markets_available_df['Datetime'], format="%Y-%m-%d %H:%M:%S")
-    return current_markets_available_df
+    return self.trading.betting.list_events(filter=sport_event_filter)
 
 
   def get_event_markets(self, eventID):
-    ''' List markets for a given event ID '''
+    ''' Returns list of market_catalogues for a given event id '''
     market_catalogue_filter = betfairlightweight.filters.market_filter(event_ids=[eventID])
-    market_catalogues = self.trading.betting.list_market_catalogue( filter=market_catalogue_filter, max_results='100', sort='FIRST_TO_START')
-
-    market_types_df = pd.DataFrame({
-      'Market Name': [market_cat_object.market_name for market_cat_object in market_catalogues],
-      'Market ID': [market_cat_object.market_id for market_cat_object in market_catalogues],
-      'Total Matched': [market_cat_object.total_matched for market_cat_object in market_catalogues],
-    })
-    return market_types_df
+    return self.trading.betting.list_market_catalogue(filter=market_catalogue_filter, 
+                                                      max_results='1000', 
+                                                      sort='FIRST_TO_START')
 
 
-  def get_runners_market_data(self, market_id, price_data):
-    ''' Returns event filtered event data for all runners (last price traded and total matched) in a given market id
+  def get_market_book(self, market_id, price_data):
+    ''' Returns market_book object for a given event_id with a price_data filter applied 
         param price_data: 
           SP_AVAILABLE - Amount available for the BSP auction.
           SP_TRADED - Amount traded in the BSP auction.
@@ -65,39 +51,31 @@ class BetFairAPI:
         raise Exception('Invalid price_data for get_runners_market_data() check function comments.')
     
     price_filter = betfairlightweight.filters.price_projection(price_data=[price_data])
-    market_book = self.trading.betting.list_market_book(market_ids=[market_id], price_projection=price_filter)[0]
-    runners = market_book.runners
-    selection_ids = [runner_book.selection_id for runner_book in runners]
-    last_prices_traded = [runner_book.last_price_traded for runner_book in runners]
-    total_matched = [runner_book.total_matched for runner_book in runners]
-
-    runners_df = pd.DataFrame({
-        'Selection ID': selection_ids,
-        'Last Price Traded': last_prices_traded,
-        'Total Matched': total_matched,
-    })
-    return runners_df
+    return self.trading.betting.list_market_book(market_ids=[market_id], price_projection=price_filter)[0]
 
 
-  def covert_price_to_probability(self, runners_df):
-      ''' Returns probability for runners dataframe'''
+  def calculate_runners_probability(self, runners, runners_names):
+      ''' Returns dictionary of key=runner_name and value=probability for runners in a market_book'''
       probability_dict = {}
-      for row in range(runners_df.shape[0]):
-        # In the future add functionality for driver/team name
-        selection_id = runners_df.iloc[row]['Selection ID']
-        last_price_traded = runners_df.iloc[row]['Last Price Traded']
+      for runner in runners:
+        name = runners_names[runner.selection_id]
+        last_price_traded = runner.last_price_traded
+
         if last_price_traded is None:
-          probability_dict[selection_id] = math.nan
+          probability_dict[name] = math.nan
         else:
-          probability_dict[selection_id] = round(((1/last_price_traded) * 100), 2)
+          probability_dict[name] = round(((1/last_price_traded) * 100), 2)
+
       return probability_dict 
     
-
-
-'''
-Get runner meta data
-
-market_catalogue_filter = betfairlightweight.filters.market_filter(event_ids=[29570037])
-f1_outrights = betfair.trading.betting.list_market_catalogue(filter=market_catalogue_filter, max_results=100)[1]
-print(f1_outrights.runners)       # When premium this should return runners
-'''
+  
+  def get_runners_names(self, market_id):
+    ''' Returns dictionary of key=selection_id and value=runner_name for a given market_id '''
+    market_catalogue_filter = betfairlightweight.filters.market_filter(market_ids=[market_id])
+    market_catalogue = self.trading.betting.list_market_catalogue(filter=market_catalogue_filter, 
+                                                                  max_results=1, 
+                                                                  market_projection=["RUNNER_DESCRIPTION", "RUNNER_METADATA"])[0]
+    runners_names = {}
+    for runner in market_catalogue.runners:
+      runners_names[runner.selection_id] = runner.runner_name.strip()
+    return runners_names
