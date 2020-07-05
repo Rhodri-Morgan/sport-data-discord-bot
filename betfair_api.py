@@ -23,7 +23,13 @@ class BetFairAPI:
 
 
   def get_events(self, sport):
-    ''' Returns event_result objects for a sport '''
+    ''' Returns event_result objects for a sport 
+        param sport:
+          Motor Sport - Formula 1 and other driving/racing based sports.
+    '''
+    if sport not in ['Motor Sport']:
+      raise Exception('Invalid sport for get_events() check function comments.')
+
     sport_filter = betfairlightweight.filters.market_filter(text_query=sport)
     sport_event_type_id = self.trading.betting.list_event_types(filter=sport_filter)[0].event_type.id
     sport_event_filter = betfairlightweight.filters.market_filter(event_type_ids=[sport_event_type_id])
@@ -48,25 +54,25 @@ class BetFairAPI:
           EX_TRADED - Amount traded on the exchange.
     '''
     if price_data not in ['SP_AVAILABLE', 'SP_TRADED', 'EX_BEST_OFFERS', 'EX_ALL_OFFERS', 'EX_TRADED']:
-        raise Exception('Invalid price_data for get_runners_market_data() check function comments.')
+      raise Exception('Invalid price_data for get_runners_market_data() check function comments.')
     
     price_filter = betfairlightweight.filters.price_projection(price_data=[price_data])
     return self.trading.betting.list_market_book(market_ids=[market_id], price_projection=price_filter)[0]
 
 
   def calculate_runners_probability(self, runners, runners_names):
-      ''' Returns dictionary of key=runner_name and value=probability for runners in a market_book'''
-      probability_dict = {}
-      for runner in runners:
-        name = runners_names[runner.selection_id]
-        last_price_traded = runner.last_price_traded
+    ''' Returns dictionary of key=runner_name and value=probability for runners in a market_book'''
+    probability_dict = {}
+    for runner in runners:
+      name = runners_names[runner.selection_id]
+      last_price_traded = runner.last_price_traded
 
-        if last_price_traded is None:
-          probability_dict[name] = math.nan
-        else:
-          probability_dict[name] = round(((1/last_price_traded) * 100), 2)
+      if last_price_traded is None:
+        probability_dict[name] = math.nan
+      else:
+        probability_dict[name] = round(((1/last_price_traded) * 100), 2)
 
-      return probability_dict 
+    return probability_dict 
     
   
   def get_runners_names(self, market_id):
