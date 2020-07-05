@@ -1,3 +1,4 @@
+import f1_betting_collector
 import discord
 from discord.ext import commands
 from discord.ext.tasks import loop
@@ -5,6 +6,7 @@ import json
 import regex
 import os
 import shutil
+import time
 
 
 bot = commands.Bot(command_prefix='!')
@@ -13,43 +15,30 @@ with open(os.path.join(os.getcwd(), 'credentials.json')) as f:
     credentials = json.loads(f.read())['discord']
 
 
-@loop(seconds=5)
-async def post_f1_daily_update():
-    print('Running...')
+@bot.command()
+async def status(ctx):
+    ''' Prints available markets for the user to view '''
     channel = bot.get_channel(credentials['f1-channel'])
-    temp_data_path = os.path.join(os.getcwd(), 'temp_f1_daily_update')
-    if os.path.exists(temp_data_path):
-        with open(os.path.join(temp_data_path, 'send.json')) as f:
-            temp_data = json.load(f)
-    await channel.send(temp_data['message'])
-    shutil.rmtree(temp_data_path)
+    async with ctx.typing():
+        motorsport_events =  f1_betting_collector.motorsport_events
+        motorsport_events_description = ""
+        for event in motorsport_events:
+            motorsport_events_description = motorsport_events_description + event.event.name + '\n'
+        
+        outright_name, outright_str = f1_betting_collector.get_championship_outright_winner_str()
+        next_race_name, next_race_str = f1_betting_collector.get_next_race_str()
+
+        e = discord.Embed(title="Motorsport Events", description=motorsport_events_description, color=0xFFFF00)
+        e.add_field(name=outright_name, value=outright_str, inline=False)
+        e.add_field(name=next_race_name, value=next_race_str, inline=False)
+    await channel.send(embed=e)
 
 
-@loop(seconds=1)
-async def post_f1_update():
-    '''Posts an update to discord for F1 composing of data, images, etc'''
-    temp_data = os.path.join(os.getcwd(), 'temp_data')
-    if os.path.exists(temp_data):
-
-        '''
-        Implement functionality to parse and post data within a directory called temp_data
-        temp_data may contain:
-        csv of race data
-        graphs and graphics
-        etc
-        '''
-
-        channel = bot.get_channel(credentials['f1-channel'])
-        await channel.send('Data')
-        shutil.rmtree(temp_data)
+@bot.command()
+async def test(ctx):
+    channel = bot.get_channel(credentials['f1-channel'])
+    await channel.send("testing multiprocessing!")
 
 
-@bot.event
-async def on_ready():
-    '''Spools up services/background tasks for discord bot'''
-    post_f1_update.start()
-    post_f1_daily_update.start()
-  
-
-
+f1_betting_collector = f1_betting_collector.F1BettingCollector()
 bot.run(credentials['token'])
