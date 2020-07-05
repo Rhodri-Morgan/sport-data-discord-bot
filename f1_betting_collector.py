@@ -22,10 +22,11 @@ class F1BettingCollector:
             outright_market_id = outright_markets.iloc[row]['Market ID']
             outright_market_name = outright_markets.iloc[row]['Market Name']
             outright_runners = self.betfair.get_runners_market_data(outright_market_id, self.price_data)
+            print(outright_runners)
             outright_probabilities = self.betfair.covert_price_to_probability(outright_runners)
             outright_dict[outright_market_name] = outright_probabilities
         return outright_dict
-
+    
 
     def get_next_race_probabilities(self):
         ''' Gets the next race probabilities for all markets, returns dict with market name as key and proabilities as values '''
@@ -39,3 +40,7 @@ class F1BettingCollector:
             next_race_probabilities = self.betfair.covert_price_to_probability(next_race_runners)
             next_race_dict[next_race_market_name] = next_race_probabilities
         return next_race_dict
+
+
+f1_betfair_collector = F1BettingCollector()
+f1_betfair_collector.get_championship_outright_winner_probabilities()

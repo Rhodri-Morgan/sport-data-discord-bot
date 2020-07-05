@@ -53,7 +53,7 @@ class F1DataProcessor:
                 if prev_driver_change > 0:
                     prev_driver_change = "(+" + str(prev_driver_change) + "%)"
                 else:
-                    prev_driver_change = "(" + str(prev_driver_change) + "%)"
+                    prev_driver_change = "(" + str(prev_driver_change) + ")"
 
             except KeyError: 
                 prev_driver_change = "(" + str(math.nan) + ")"
