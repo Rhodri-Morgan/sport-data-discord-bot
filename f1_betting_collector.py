@@ -1,8 +1,6 @@
 import betfair_api
 import f1_betfair_markets
 import f1_meta_collector
-import datetime
-import pandas as pd
 
 
 class F1BettingCollector:
@@ -33,3 +31,7 @@ class F1BettingCollector:
             next_race_runners_names = self.betfair.get_runners_names(next_race_market.market_id)
             next_race_dict[next_race_market.market_name] = self.betfair.calculate_runners_probability(next_race_market_book.runners, next_race_runners_names)
         return next_race_dict
+
+
+test = F1BettingCollector()
+test.get_next_race_probabilities()

@@ -1,6 +1,3 @@
-import pandas as pd
-import datetime
-
 class F1BetfairMarkets:
     def __init__(self, betfair, motorsport_events):
         self.betfair = betfair

@@ -1,11 +1,9 @@
-import betfairlightweight
-from betfairlightweight import filters
-import pandas as pd
-import numpy as np
+import json
 import math
 import os
-import datetime
-import json
+
+import betfairlightweight
+from betfairlightweight import filters
 
 
 class BetFairAPI:
@@ -36,9 +34,9 @@ class BetFairAPI:
     return self.trading.betting.list_events(filter=sport_event_filter)
 
 
-  def get_event_markets(self, eventID):
+  def get_event_markets(self, event_id):
     ''' Returns list of market_catalogues for a given event id '''
-    market_catalogue_filter = betfairlightweight.filters.market_filter(event_ids=[eventID])
+    market_catalogue_filter = betfairlightweight.filters.market_filter(event_ids=[event_id])
     return self.trading.betting.list_market_catalogue(filter=market_catalogue_filter, 
                                                       max_results='1000', 
                                                       sort='FIRST_TO_START')
