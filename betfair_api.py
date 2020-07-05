@@ -78,7 +78,7 @@ class BetFairAPI:
         market_catalogue_filter = betfairlightweight.filters.market_filter(market_ids=[market_id])
         market_catalogue = self.trading.betting.list_market_catalogue(filter=market_catalogue_filter, 
                                                                     max_results=1, 
-                                                                    market_projection=["RUNNER_DESCRIPTION", "RUNNER_METADATA"])[0]
+                                                                    market_projection=['RUNNER_DESCRIPTION', 'RUNNER_METADATA'])[0]
         runners_names = {}
         for runner in market_catalogue.runners:
             runners_names[runner.selection_id] = runner.runner_name.strip()

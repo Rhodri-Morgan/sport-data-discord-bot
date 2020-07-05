@@ -9,20 +9,20 @@ class F1MetaCollector:
         with open(os.path.join(os.getcwd(), 'credentials.json')) as f:
             self.credentials = json.loads(f.read())['sportradar']
 
-        self.connection = http.client.HTTPSConnection("api.sportradar.us")
+        self.connection = http.client.HTTPSConnection('api.sportradar.us')
         self.races_data = self.request_races_data()
 
 
     def request_races_data(self):
         ''' Requests data from the sportradar API about races for F1 '''
-        self.connection.request("GET", "/formula1/trial/v2/en/sport_events/sr:stage:547803/summary.json?api_key=" + self.credentials['api_key'])
+        self.connection.request('GET', '/formula1/trial/v2/en/sport_events/sr:stage:547803/summary.json?api_key=' + self.credentials['api_key'])
         response = self.connection.getresponse()
         return json.loads(response.read())['stage']
 
 
     def request_race_data(self, id):
         ''' Requests data from the sportradar API about F1 race '''
-        self.connection.request("GET", "/formula1/trial/v2/en/sport_events/" + id +"/summary.json?api_key=" + self.credentials['api_key'])
+        self.connection.request('GET', '/formula1/trial/v2/en/sport_events/' + id +'/summary.json?api_key=' + self.credentials['api_key'])
         response = self.connection.getresponse()
         race_data = json.loads(response.read())
         return race_data
@@ -30,12 +30,12 @@ class F1MetaCollector:
 
     def get_race_end_datetime(self, race):
         ''' Returns datetime object of race ending datetime '''
-        return datetime.strptime(str(race['scheduled_end'][0:10]+" "+race['scheduled_end'][11:19]).strip(), "%Y-%m-%d %H:%M:%S") 
+        return datetime.strptime(str(race['scheduled_end'][0:10]+' '+race['scheduled_end'][11:19]).strip(), '%Y-%m-%d %H:%M:%S') 
 
 
     def get_race_end_date(self, race):
         ''' Returns datetime object of race ending date '''
-        return datetime.strptime(str(race['scheduled_end'][0:10]), "%Y-%m-%d") 
+        return datetime.strptime(str(race['scheduled_end'][0:10]), '%Y-%m-%d') 
 
 
     def get_next_race(self):

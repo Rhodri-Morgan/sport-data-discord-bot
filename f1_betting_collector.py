@@ -14,7 +14,7 @@ class F1BettingCollector:
 
     def get_championship_outright_winner_str(self):
         ''' Returns tuple of outright_winner event name and outright_winner string representation of available markets '''
-        outright_str = ""
+        outright_str = ''
         outright_name, outright_markets = self.f1_markets.get_outright_championship_markets()
         for outright_market in outright_markets:
             outright_str = outright_str + outright_market.market_name + ' ' + '\n'
@@ -33,7 +33,7 @@ class F1BettingCollector:
 
     def get_next_race_str(self):
         ''' Returns tuple of next_race event name and next_race string representation of available markets '''
-        next_race_str = ""
+        next_race_str = ''
         next_race_datetime = self.f1_meta.get_race_end_datetime(self.f1_meta.get_next_race())
         next_race_name, next_race_markets = self.f1_markets.get_next_f1_race_markets(next_race_datetime)
         for next_race_market in next_race_markets:
