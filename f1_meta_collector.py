@@ -27,20 +27,25 @@ class F1MetaCollector:
         return race_data
 
 
-    def get_race_datetime(self, race):
-        ''' Extracts time and date from race and creates a datetime object '''
-        race_string = str(race['scheduled'][0:10]+" "+race['scheduled'][11:19]).strip()    
-        return datetime.datetime.strptime(race_string, "%Y-%m-%d %H:%M:%S") 
+    def get_race_end_datetime(self, race):
+        ''' Extracts ending time and date from race and creates a datetime object '''
+        return datetime.datetime.strptime(str(race['scheduled_end'][0:10]+" "+race['scheduled_end'][11:19]).strip(), "%Y-%m-%d %H:%M:%S") 
+
+
+    def get_race_end_date(self, race):
+        ''' Extracts ending date from race and creates a datetime object '''
+        return datetime.datetime.strptime(str(race['scheduled_end'][0:10]), "%Y-%m-%d") 
 
 
     def get_next_race(self):
         ''' Finds the next (soonest) race for F1 and returns relevent index '''
         soonest_race = None
         for race in self.races_data['stages']:
-            race_datetime = self.get_race_datetime(race)
+            race_datetime = self.get_race_end_datetime(race)
             current_datetime = datetime.datetime.utcnow()
             if soonest_race is None and race_datetime > current_datetime:
                 soonest_race = race
-            elif race_datetime > current_datetime and race_datetime < self.get_race_datetime(soonest_race):
+            elif race_datetime > current_datetime and race_datetime < self.get_race_end_datetime(soonest_race):
                 soonest_race = race
         return soonest_race
+    
