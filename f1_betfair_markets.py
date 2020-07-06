@@ -1,3 +1,5 @@
+from datetime import datetime
+
 class F1BetfairMarkets:
     def __init__(self, betfair, motorsport_events):
         self.betfair = betfair
@@ -14,7 +16,7 @@ class F1BetfairMarkets:
         ''' Lazily returns tuple of event name and markets available for outright championship e.g WDC, WCC '''
         if self.outright_event_name is None and self.outright_championship_markets is None:
             for event in self.motorsport_events:
-                if event.event.name.startswith('F1 Outrights'):
+                if event.event.name == 'F1 Outrights '+datetime.utcnow().strftime("%Y"):
                     self.outright_event_name = event.event.name
                     self.outright_championship_markets = self.betfair.get_event_markets(event.event.id)
                     break
