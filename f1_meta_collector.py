@@ -50,3 +50,4 @@ class F1MetaCollector:
             elif race_datetime > current_datetime and race_datetime < self.get_race_end_datetime(soonest_race):
                 soonest_race = race
         return soonest_race
+        

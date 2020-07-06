@@ -45,13 +45,15 @@ async def f1_status(ctx):
         motorsport_events_description = ''
         for event in motorsport_events:
             motorsport_events_description = motorsport_events_description + event.event.name + '\n'
-        
-        outright_name, outright_str = f1_betting_collector.get_championship_outright_winner_str()
-        next_race_name, next_race_str = f1_betting_collector.get_next_race_str()
-
         e = discord.Embed(title='Motorsport Events', description=motorsport_events_description, color=0xFFFF00)
-        e.add_field(name=outright_name, value=outright_str, inline=False)
-        e.add_field(name=next_race_name, value=next_race_str, inline=False)
+
+        outright = f1_betting_collector.get_championship_outright_winner_str()
+        next_race = f1_betting_collector.get_next_race_str()
+        events_markets = [outright, next_race]
+        for event in events_markets:
+            if event[0] is not None and event[1] is not None:
+                 e.add_field(name=event[0], value=event[1], inline=False)
+
     await channel.send(embed=e)
     print('COMPLETED: f1_status()')
 
