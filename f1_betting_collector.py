@@ -56,3 +56,17 @@ class F1BettingCollector:
             next_race_runners_names = self.betfair.get_runners_names(next_race_market.market_id)
             next_race_dict[next_race_market.market_name] = self.betfair.calculate_runners_probability(next_race_market_book.runners, next_race_runners_names)
         return next_race_dict
+
+
+    def get_event_markets(self, event_id):
+        event_markets = self.betfair.get_event_markets(event_id)
+        return event_markets
+
+
+    def get_event_markets_str(self, event_id):
+        event_markets = self.betfair.get_event_markets(event_id)
+        if len(event_markets) == 0:
+            return None
+        event_markets_str = ''
+        for market in event_markets:
+            event_markets = '{0}{1}\n'.format(event_markets_str, market.market_name)
