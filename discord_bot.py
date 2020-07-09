@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import math
 import shutil
 from datetime import datetime, timedelta
 
@@ -9,29 +10,19 @@ from discord.ext import commands
 from discord.ext.tasks import loop
 
 import f1_betting_collector
+import betfair_api
 from f1_data_logger import *
 
 
 bot = commands.Bot(command_prefix='!')
 
 f1_betting_collector = f1_betting_collector.F1BettingCollector()
+betfair = betfair_api.BetFairAPI()
 
 datalogger_datetime = datetime(datetime.utcnow().year, datetime.utcnow().month, datetime.utcnow().day, 00, 00)
 
 with open(os.path.join(os.getcwd(), 'credentials.json')) as f:
     credentials = json.loads(f.read())['discord']
-
-
-@loop(seconds=1)
-async def f1_data_logger():
-    ''' Saves and logs data at 0000 UTC '''
-    if datetime.utcnow().replace(second=0, microsecond=0) == datalogger_datetime:
-        print('RUNNING: f1_data_logger()')
-        f1_outright_winners = f1_betting_collector.get_championship_outright_winner_probabilities()
-        save_world_constructors_champion_data({datetime.utcnow().strftime('%Y-%m-%d'): f1_outright_winners['Winner - Constructors Championship']})
-        save_world_drivers_champion_data({datetime.utcnow().strftime('%Y-%m-%d'): f1_outright_winners['Winner - Drivers Championship']})    
-        datalogger_datetime = datalogger_datetime + timedelta(days=1)
-        print('COMPLETED: f1_data_logger()')
 
 
 @bot.command()
@@ -59,18 +50,17 @@ async def motorsport_status(ctx):
         for event in events_markets:
             if event[0] is not None and event[1] is not None:
                  e.add_field(name=event[0], value=event[1], inline=False)
-
     await channel.send(embed=e)
     print('COMPLETED: motorsport_status()')
 
 
-async def menu_selection(channel):
+async def menu_selection(channel, options):
     ''' Loop for user to enter menu selection ''' 
     while True:
         response = await bot.wait_for('message')
         if response.content.strip().lower() == 'exit':
             return None
-        elif re.search('^[0-9]+$', response.content) and int(response.content) > 0 and int(response.content) <= len(markets):
+        elif re.search('^[0-9]+$', response.content) and int(response.content) > 0 and int(response.content) <= len(options):
             return int(response.content)
         else:
             await channel.send('`Error please make another selection or type \'exit\'.`')
@@ -88,7 +78,7 @@ async def user_select_event(channel, sport_str, events):
     events_str = '```{0}\nPlease enter an option below.```'.format(events_str)
     await channel.send(events_str)
 
-    response = await menu_selection(channel)
+    response = await menu_selection(channel, events)
 
     if response is None:
         return None
@@ -108,12 +98,27 @@ async def user_select_market(channel, event, markets):
     event_str = '```{0}\nPlease enter an option below.```'.format(event_str)
     await channel.send(event_str)
 
-    response = await menu_selection(channel)
+    response = await menu_selection(channel, markets)
 
     if response is None:
         return None
     else:
         return markets[response-1]
+
+
+async def display_data(channel, protabilities_dict, event_name, market_name):
+    ''' Displays data as precentages for event and market '''
+    if all(math.isnan(value) for value in protabilities_dict.values()):
+        await channel.send('`Currently there is no valid data for {0} - {1}.`'.format(event_name, market_name))
+        return
+
+    probabilities_str = 'event = {0}, market = {1}, processed_datetime = {2}\n\n'.format(event_name, market_name, datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'))
+    for key, value in protabilities_dict.items():
+        if not math.isnan(value):
+            probabilities_str = '{0}{1} - {2}%\n'.format(probabilities_str, key, value)
+    probabilities_str = '```{0}```'.format(probabilities_str)
+
+    await channel.send(probabilities_str)
 
 
 @bot.command()
@@ -132,7 +137,10 @@ async def motorsport(ctx):
         if motorsport_event_market is None:
             return
 
-        print(motorsport_event_market)
+        motorsport_market_book = betfair.get_market_book(motorsport_event_market.market_id, 'EX_BEST_OFFERS')
+        motorsport_market_runners_names = betfair.get_runners_names(motorsport_event_market.market_id)
+        motorsport_protabilities_dict = betfair.calculate_runners_probability(motorsport_market_book.runners, motorsport_market_runners_names)
+        await display_data(motorsport_channel, motorsport_protabilities_dict, motorsport_event.event.name, motorsport_event_market.market_name)
     print('COMPLETED: motor_sport()')
 
 
@@ -140,7 +148,6 @@ async def motorsport(ctx):
 async def on_ready():
     '''Spools up services/background tasks for discord bot'''
     print('Discord bot: ONLINE')
-    f1_data_logger.start()
 
 
 bot.run(credentials['token'])
