@@ -1,25 +1,18 @@
 import json
+import math
 import os
 import re
-import math
 import shutil
 from datetime import datetime, timedelta
 
+import betfair_api
 import discord
 from discord.ext import commands
 from discord.ext.tasks import loop
 
-import f1_betting_collector
-import betfair_api
-from f1_data_logger import *
-
-
 bot = commands.Bot(command_prefix='!')
 
-f1_betting_collector = f1_betting_collector.F1BettingCollector()
 betfair = betfair_api.BetFairAPI()
-
-datalogger_datetime = datetime(datetime.utcnow().year, datetime.utcnow().month, datetime.utcnow().day, 00, 00)
 
 with open(os.path.join(os.getcwd(), 'credentials.json')) as f:
     credentials = json.loads(f.read())['discord']
@@ -38,19 +31,7 @@ async def motorsport_status(ctx):
     print('RUNNING: motorsport_status()')
     channel = bot.get_channel(credentials['f1-channel'])
     async with ctx.typing():
-        motorsport_events =  f1_betting_collector.motorsport_events
-        motorsport_events_description = ''
-        for event in motorsport_events:
-            motorsport_events_description = motorsport_events_description + event.event.name + '\n'
-        e = discord.Embed(title='Motorsport Events', description=motorsport_events_description, color=0xFFFF00)
-
-        outright = f1_betting_collector.get_championship_outright_winner_str()
-        next_race = f1_betting_collector.get_next_race_str()
-        events_markets = [outright, next_race]
-        for event in events_markets:
-            if event[0] is not None and event[1] is not None:
-                 e.add_field(name=event[0], value=event[1], inline=False)
-    await channel.send(embed=e)
+        string = 'TODO'
     print('COMPLETED: motorsport_status()')
 
 
@@ -127,12 +108,12 @@ async def motorsport(ctx):
     print('RUNNING: motor_sport()')
     async with ctx.typing():
         motorsport_channel = bot.get_channel(credentials['f1-channel'])
-        motorsport_events =  f1_betting_collector.motorsport_events
+        motorsport_events =  betfair.get_events('Motor Sport')
         motorsport_event = await user_select_event(motorsport_channel, 'motor sport', motorsport_events)
         if motorsport_event is None:
             return
 
-        motorsport_event_markets = f1_betting_collector.get_event_markets(motorsport_event.event.id)
+        motorsport_event_markets = betfair.get_event_markets(motorsport_event.event.id)
         motorsport_event_market = await user_select_market(motorsport_channel, motorsport_event.event, motorsport_event_markets)
         if motorsport_event_market is None:
             return
