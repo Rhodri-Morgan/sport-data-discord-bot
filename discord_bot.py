@@ -12,10 +12,19 @@ from discord.ext.tasks import loop
 
 bot = commands.Bot(command_prefix='!')
 
-betfair = betfair_api.BetFairAPI()
-
 with open(os.path.join(os.getcwd(), 'credentials.json')) as f:
     credentials = json.loads(f.read())['discord']
+
+betfair = betfair_api.BetFairAPI()
+
+recent_commands = {}
+
+
+async def get_channel(sport_str):
+    if sport_str == 'motor sport':
+        return bot.get_channel(credentials['motorsport-channel'])
+    else:
+        return None
 
 
 @bot.command()
@@ -23,12 +32,59 @@ async def commands(ctx):
     ''' Sends caller a private message with a list of commands '''
     print('RUNNING: commands()')
     header_str = 'Use ! to begin a command. Commands must all be in lowercase.\n' \
-               + '!commands - Displays a list of available commands for the bot.\n' 
+               + 'Use -- to begin a flag after a command. Flags must have no spaces.\n' \
+               + '!commands - Displays a list of available commands/flags for the bot.\n' 
+
+    motorsport_command_str = '!motorsport - Menu driven system for viewing event and market data.\n' \
+                           + '      --price_data=[SP_AVAILABLE, SP_TRADED, EX_BEST_OFFERS, EX_ALL_OFFERS, EX_TRADED]\n' \
+                           + '          e.g !motorsport --price_data=SP_AVAILABLE\n'
     motorsport_str = '!motorsport_status - Prints available events and sub-event markets.\n' \
-                   + '!motorsport - Menu driven system for viewing event and market data.\n'
+                   + motorsport_command_str
+    
     commands_str = '```{0}```\n```{1}```'.format(header_str, motorsport_str)
     await ctx.author.send(commands_str)
     print('COMPLETED: commands()')
+
+
+@bot.command()
+async def motorsport_status(ctx):
+    ''' Prints available markets for motor sport for the user to view '''
+    print('RUNNING: motorsport_status()')
+    async with ctx.typing():
+        motorsport_channel = await get_channel('motor sport')
+        await status(motorsport_channel, 'Motor Sport')
+    print('COMPLETED: motorsport_status()')
+
+
+async def status(channel, sport_str):
+    ''' Prints available markets for a given sport for the user to view '''
+    status_str = ''
+    events =  betfair.get_events(sport_str)
+    for event in events:
+        markets = betfair.get_event_markets(event.event.id)
+        status_sub_str = '{0}\n\n'.format(event.event.name)
+        for market in markets:
+            status_sub_str = '{0}{1}\n'.format(status_sub_str, market.market_name)
+        status_str = '{0}```{1}```\n'.format(status_str, status_sub_str)
+    await channel.send(status_str)
+
+
+@bot.command()
+async def refresh(ctx):
+    ''' Refreshes last data request command with output of live data '''
+    print('RUNNING: refresh()')
+    async with ctx.typing():
+        if ctx.author not in recent_commands:
+            await ctx.author.send('`You have not made a valid data request yet. See !commands for information.`')
+            return
+            
+        sport_str, event_name, market_name, market_id = recent_commands[ctx.author]
+        channel = await get_channel(sport_str)
+        market_book = betfair.get_market_book(market_id, 'EX_BEST_OFFERS')
+        market_runners_names = betfair.get_runners_names(market_id)
+        protabilities_dict = betfair.calculate_runners_probability(market_book.runners, market_runners_names)
+        await display_data(channel, protabilities_dict, event_name, market_name)
+    print('COMPLETED: refresh()')
 
 
 async def menu_selection(channel, options):
@@ -40,6 +96,7 @@ async def menu_selection(channel, options):
         elif re.search('^[0-9]+$', response.content) and int(response.content) > 0 and int(response.content) <= len(options):
             return int(response.content)
         else:
+            print(response.content)
             await channel.send('`Error please make another selection or type \'exit\'.`')
 
 
@@ -98,35 +155,31 @@ async def display_data(channel, protabilities_dict, event_name, market_name):
     await channel.send(probabilities_str)
 
 
-async def status(channel, sport_str):
-    ''' Prints available markets for a given sport for the user to view '''
-    status_str = ''
-    events =  betfair.get_events(sport_str)
-    for event in events:
-        markets = betfair.get_event_markets(event.event.id)
-        status_sub_str = '{0}\n\n'.format(event.event.name)
-        for market in markets:
-            status_sub_str = '{0}{1}\n'.format(status_sub_str, market.market_name)
-        status_str = '{0}```{1}```\n'.format(status_str, status_sub_str)
-    await channel.send(status_str)
+async def process_price_data_flag(channel, flag):
+    ''' Processes the user price_data flag for validity and returns price data string '''
+    price_data = ['--price_data=SP_AVAILABLE', 
+                  '--price_data=SP_TRADED',
+                  '--price_data=EX_BEST_OFFERS',
+                  '--price_data=EX_ALL_OFFERS',
+                  '--price_data=EX_TRADED']
+
+    if flag == 'EX_BEST_OFFERS':
+        return flag
+    elif flag in price_data:
+        return flag.strip('--prince_data=')
+    elif flag.startswith('--price_data='):
+        await channel.send('`Invalid prince_data selection. Defaulted to EX_BEST_OFFERS. See !commands for more information`')
+    else:
+        await channel.send('`Unrecognised flag. Defaulted to EX_BEST_OFFERS. See !commands for more information`')
+    return 'EX_BEST_OFFERS'
 
 
 @bot.command()
-async def motorsport_status(ctx):
-    ''' Prints available markets for motor sport for the user to view '''
-    print('RUNNING: motorsport_status()')
-    async with ctx.typing():
-        motorsport_channel = bot.get_channel(credentials['motorsport-channel'])
-        await status(motorsport_channel, 'Motor Sport')
-    print('COMPLETED: motorsport_status()')
-
-
-@bot.command()
-async def motorsport(ctx):
+async def motorsport(ctx, flag : str = 'EX_BEST_OFFERS'):
     ''' Provides functionality to view data breakdown for an event and market '''
     print('RUNNING: motor_sport()')
     async with ctx.typing():
-        motorsport_channel = bot.get_channel(credentials['motorsport-channel'])
+        motorsport_channel = await get_channel('motor sport')
         motorsport_events =  betfair.get_events('Motor Sport')
         motorsport_event = await user_select_event(motorsport_channel, 'motor sport', motorsport_events)
         if motorsport_event is None:
@@ -137,10 +190,12 @@ async def motorsport(ctx):
         if motorsport_event_market is None:
             return
 
-        motorsport_market_book = betfair.get_market_book(motorsport_event_market.market_id, 'EX_BEST_OFFERS')
+        motorsport_market_book = betfair.get_market_book(motorsport_event_market.market_id, await process_price_data_flag(motorsport_channel, flag))
         motorsport_market_runners_names = betfair.get_runners_names(motorsport_event_market.market_id)
         motorsport_protabilities_dict = betfair.calculate_runners_probability(motorsport_market_book.runners, motorsport_market_runners_names)
         await display_data(motorsport_channel, motorsport_protabilities_dict, motorsport_event.event.name, motorsport_event_market.market_name)
+
+        recent_commands[ctx.author] = ('motor sport', motorsport_event.event.name, motorsport_event_market.market_name, motorsport_event_market.market_id)
     print('COMPLETED: motor_sport()')
 
 
