@@ -8,8 +8,10 @@ from datetime import datetime, timedelta
 
 import betfair_api
 import discord
+import asyncio
 from discord.ext import commands
 from discord.ext.tasks import loop
+
 
 bot = commands.Bot(command_prefix='!')
 betfair = betfair_api.BetFairAPI()
@@ -111,13 +113,17 @@ async def menu_selection(user, channel, options):
         return message.author == user and message.channel.id == channel.id
 
     while True:
-        response = await bot.wait_for('message', check=check)
+        try:
+            response = await bot.wait_for('message', timeout=10.0, check=check)
+        except asyncio.TimeoutError:
+            await channel.send('`Error data request has timed out. Please try again.`')
+            return None
+
         if response.content.strip().lower() == 'exit':
             return None
         elif re.search('^[0-9]+$', response.content) and int(response.content) > 0 and int(response.content) <= len(options):
             return int(response.content)
         else:
-            print(response.content)
             await channel.send('`Error please make another selection or type \'exit\'.`')
 
 
