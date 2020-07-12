@@ -2,6 +2,7 @@ import json
 import math
 import os
 import re
+import time
 import shutil
 from datetime import datetime, timedelta
 
@@ -17,20 +18,14 @@ with open(os.path.join(os.getcwd(), 'credentials.json')) as f:
 
 betfair = betfair_api.BetFairAPI()
 
+sport_channels = {'Motor Sport' : credentials['motorsport-channel']}
 recent_commands = {}
-
-
-async def get_channel(sport_str):
-    if sport_str == 'motor sport':
-        return bot.get_channel(credentials['motorsport-channel'])
-    else:
-        return None
+data_messages = {sport_channels['Motor Sport'] : []}
 
 
 @bot.command()
 async def commands(ctx):
     ''' Sends caller a private message with a list of commands '''
-    print('RUNNING: commands()')
     header_str = 'Use ! to begin a command. Commands must all be in lowercase.\n' \
                + 'Use -- to begin a flag after a command. Flags must have no spaces.\n' \
                + '!commands - Displays a list of available commands/flags for the bot.\n' 
@@ -43,54 +38,62 @@ async def commands(ctx):
     
     commands_str = '```{0}```\n```{1}```'.format(header_str, motorsport_str)
     await ctx.author.send(commands_str)
-    print('COMPLETED: commands()')
 
 
 @bot.command()
 async def motorsport_status(ctx):
     ''' Prints available markets for motor sport for the user to view '''
-    print('RUNNING: motorsport_status()')
     async with ctx.typing():
-        motorsport_channel = await get_channel('motor sport')
+        motorsport_channel = bot.get_channel(sport_channels['Motor Sport'])
         await status(motorsport_channel, 'Motor Sport')
-    print('COMPLETED: motorsport_status()')
+
+    await cleanup_messages(ctx, 'Motor Sport')
 
 
-async def status(channel, sport_str):
+async def status(channel, sport):
     ''' Prints available markets for a given sport for the user to view '''
     status_str = ''
-    events =  betfair.get_events(sport_str)
+    events =  betfair.get_events(sport)
+    if len(events) == 0:
+        await channel.send('`Currently there are no open {0} events.`'.format(sport))
+        return None
+
     for event in events:
         markets = betfair.get_event_markets(event.event.id)
         status_sub_str = '{0}\n\n'.format(event.event.name)
         for market in markets:
             status_sub_str = '{0}{1}\n'.format(status_sub_str, market.market_name)
         status_str = '{0}```{1}```\n'.format(status_str, status_sub_str)
-    await channel.send(status_str)
 
+    message = await channel.send(status_str)
+    data_messages[channel.id].append(message.id)
+    
 
 @bot.command()
 async def refresh(ctx):
     ''' Refreshes last data request command with output of live data '''
-    print('RUNNING: refresh()')
     async with ctx.typing():
         if ctx.author not in recent_commands:
             await ctx.author.send('`You have not made a valid data request yet. See !commands for information.`')
             return
             
-        sport_str, event_name, market_name, market_id = recent_commands[ctx.author]
-        channel = await get_channel(sport_str)
-        market_book = betfair.get_market_book(market_id, 'EX_BEST_OFFERS')
+        sport, event_name, market_name, market_id, price_data = recent_commands[ctx.author]
+        channel = bot.get_channel(sport_channels[sport])
+        market_book = betfair.get_market_book(market_id, price_data)
         market_runners_names = betfair.get_runners_names(market_id)
         protabilities_dict = betfair.calculate_runners_probability(market_book.runners, market_runners_names)
-        await display_data(channel, protabilities_dict, event_name, market_name)
-    print('COMPLETED: refresh()')
+        await display_data(ctx.author, channel, sport, protabilities_dict, event_name, market_name)
+
+    await cleanup_messages(ctx, sport)
 
 
-async def menu_selection(channel, options):
+async def menu_selection(user, channel, options):
     ''' Loop for user to enter menu selection ''' 
+    def check(message):
+        return message.author == user
+
     while True:
-        response = await bot.wait_for('message')
+        response = await bot.wait_for('message', check=check)
         if response.content.strip().lower() == 'exit':
             return None
         elif re.search('^[0-9]+$', response.content) and int(response.content) > 0 and int(response.content) <= len(options):
@@ -100,19 +103,19 @@ async def menu_selection(channel, options):
             await channel.send('`Error please make another selection or type \'exit\'.`')
 
 
-async def user_select_event(channel, sport_str, events):
+async def user_select_event(user, channel, sport, events):
     ''' Allows user to select option from a list of available events for a sport '''
     if len(events) == 0:
-        await channel.send('`Currently there are no open {0} events.`'.format(sport_str))
+        await channel.send('`Currently there are no open {0} events.`'.format(sport))
         return None
 
-    events_str = 'Available {0} events: \n'.format(sport_str)
+    events_str = 'Available {0} events: \n'.format(sport)
     for cnt, event in enumerate(events, start=1):
         events_str = '{0}{1} - {2}\n'.format(events_str, str(cnt), event.event.name)
     events_str = '```{0}\nPlease enter an option below.```'.format(events_str)
     await channel.send(events_str)
 
-    response = await menu_selection(channel, events)
+    response = await menu_selection(user, channel, events)
 
     if response is None:
         return None
@@ -120,7 +123,7 @@ async def user_select_event(channel, sport_str, events):
         return events[response-1]
 
 
-async def user_select_market(channel, event, markets):
+async def user_select_market(user, channel, event, markets):
     ''' Allows user to select option from a list of available markets for an event '''
     if len(markets) == 0:
         await channel.send('`Currently there are no open markets for {0}.`'.format(event.name))
@@ -132,7 +135,7 @@ async def user_select_market(channel, event, markets):
     event_str = '```{0}\nPlease enter an option below.```'.format(event_str)
     await channel.send(event_str)
 
-    response = await menu_selection(channel, markets)
+    response = await menu_selection(user, channel, markets)
 
     if response is None:
         return None
@@ -140,19 +143,23 @@ async def user_select_market(channel, event, markets):
         return markets[response-1]
 
 
-async def display_data(channel, protabilities_dict, event_name, market_name):
+async def display_data(user, channel, sport, protabilities_dict, event_name, market_name):
     ''' Displays data as precentages for event and market '''
     if all(math.isnan(value) for value in protabilities_dict.values()):
         await channel.send('`Currently there is no valid data for {0} - {1}.`'.format(event_name, market_name))
         return
 
-    probabilities_str = 'event = {0}, market = {1}, processed_datetime = {2}\n\n'.format(event_name, market_name, datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'))
+    probabilities_str = 'Event - {0}\nMarket - {1}\nProcessed Datetime - {2}\nRequested User - {3}\n\n'.format(event_name, 
+                                                                                                                  market_name, 
+                                                                                                                  datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+                                                                                                                  user.display_name)
     for key, value in protabilities_dict.items():
         if not math.isnan(value):
             probabilities_str = '{0}{1} - {2}%\n'.format(probabilities_str, key, value)
     probabilities_str = '```{0}```'.format(probabilities_str)
 
-    await channel.send(probabilities_str)
+    message = await channel.send(probabilities_str)
+    data_messages[channel.id].append(message.id)
 
 
 async def process_price_data_flag(channel, flag):
@@ -174,29 +181,47 @@ async def process_price_data_flag(channel, flag):
     return 'EX_BEST_OFFERS'
 
 
+async def cleanup_messages(ctx, sport):
+    time.sleep(5) 
+    channel = bot.get_channel(sport_channels[sport])
+    async for message in channel.history(limit=None):
+        if message.id not in data_messages[channel.id]:
+            await message.delete()
+
+
+async def sport(ctx, flag, sport):
+    ''' Provides functionality to select and view data breakdown for an event market '''
+    channel_id = sport_channels[sport]
+    channel = bot.get_channel(channel_id)
+    if ctx.channel.id != channel_id:
+        await ctx.author.send('`Please utilise the appropriate data channel for requesting sport data.`')
+        return
+
+    async with ctx.typing():
+        events = betfair.get_events(sport)
+        event = await user_select_event(ctx.author, channel, sport, events)
+        if event is None:
+            return
+
+        event_markets = betfair.get_event_markets(event.event.id)
+        event_market = await user_select_market(ctx.author, channel, event.event, event_markets)
+        if event_market is None:
+            return
+        
+        price_data = await process_price_data_flag(channel, flag)
+        market_book = betfair.get_market_book(event_market.market_id, price_data)
+        market_runners_names = betfair.get_runners_names(event_market.market_id)
+        protabilities_dict = betfair.calculate_runners_probability(market_book.runners, market_runners_names)
+        await display_data(ctx.author, channel, sport, protabilities_dict, event.event.name, event_market.market_name)
+        recent_commands[ctx.author] = (sport, event.event.name, event_market.market_name, event_market.market_id, price_data)
+
+
 @bot.command()
 async def motorsport(ctx, flag : str = 'EX_BEST_OFFERS'):
-    ''' Provides functionality to view data breakdown for an event and market '''
-    print('RUNNING: motor_sport()')
-    async with ctx.typing():
-        motorsport_channel = await get_channel('motor sport')
-        motorsport_events =  betfair.get_events('Motor Sport')
-        motorsport_event = await user_select_event(motorsport_channel, 'motor sport', motorsport_events)
-        if motorsport_event is None:
-            return
-
-        motorsport_event_markets = betfair.get_event_markets(motorsport_event.event.id)
-        motorsport_event_market = await user_select_market(motorsport_channel, motorsport_event.event, motorsport_event_markets)
-        if motorsport_event_market is None:
-            return
-
-        motorsport_market_book = betfair.get_market_book(motorsport_event_market.market_id, await process_price_data_flag(motorsport_channel, flag))
-        motorsport_market_runners_names = betfair.get_runners_names(motorsport_event_market.market_id)
-        motorsport_protabilities_dict = betfair.calculate_runners_probability(motorsport_market_book.runners, motorsport_market_runners_names)
-        await display_data(motorsport_channel, motorsport_protabilities_dict, motorsport_event.event.name, motorsport_event_market.market_name)
-
-        recent_commands[ctx.author] = ('motor sport', motorsport_event.event.name, motorsport_event_market.market_name, motorsport_event_market.market_id)
-    print('COMPLETED: motor_sport()')
+    ''' Process Motor Sport request '''
+    sport_str = 'Motor Sport'
+    await sport(ctx, flag, sport_str)
+    await cleanup_messages(ctx, sport_str)
 
 
 @bot.event
