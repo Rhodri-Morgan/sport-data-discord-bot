@@ -26,22 +26,27 @@ data_messages = {sport_channels['Motor Sport'] : []}
 @bot.command()
 async def commands(ctx):
     ''' Sends caller a private message with a list of commands '''
-    header_str = 'Use ! to begin a command. Commands must all be in lowercase.\n' \
-               + 'Use -- to begin a flag after a command. Flags must have no spaces.\n' \
-               + '!commands - Displays a list of available commands/flags for the bot.\n' 
+    header = 'Use ! to begin a command. Commands must all be in lowercase.\n' \
+           + 'Use -- to begin a flag after a command. Flags must have no spaces.\n' \
+           + '!commands - Displays a list of available commands/flags for the bot.\n' 
 
-    aside_str = 'Please note: After finishing command after 5 seconds non-critical messages will be deleted.'
+    aside = 'Please note: After finishing command after 5 seconds non-critical messages will be deleted.'
 
-    motorsport_command_str = '!motorsport - Menu driven system for viewing event and market data.\n' \
-                           + '      --price_data=[SP_AVAILABLE, SP_TRADED, EX_BEST_OFFERS, EX_ALL_OFFERS, EX_TRADED]\n' \
-                           + '          e.g !motorsport --price_data=SP_AVAILABLE\n'
-    motorsport_str = '!motorsport_status - Prints available events and sub-event markets.\n' \
-                   + motorsport_command_str
+    general = '!refresh - Reruns last data request command to retrieve most recent data utilising originally selected criteria (event, market, price_data, ...).'
+
+    motorsport_command = '!motorsport - Menu driven system for viewing event and market data.\n' \
+                       + '              --price_data=[SP_AVAILABLE, SP_TRADED, EX_BEST_OFFERS, EX_ALL_OFFERS, EX_TRADED]\n'.format() \
+                       + '              e.g !motorsport --price_data=SP_AVAILABLE\n'.format()
+    motorsport = 'Please ensure all motorsport commands are in the motorsport-data channel.\n\n' \
+               + '!motorsport_status - Prints available events and sub-event markets.\n' \
+               + motorsport_command
     
-    commands_str = '```{0}\n{1}```\n```{2}```'.format(header_str, aside_str, motorsport_str)
+    commands = '```{0}\n{1}```\n```{2}```\n```{3}```'.format(header, aside, general, motorsport)
 
     if ctx.channel.id in sport_channels.values():
-        await ctx.author.send(commands_str)
+        message = await ctx.author.send(commands)
+        time.sleep(60)
+        await message.delete()
 
 
 @bot.command()
@@ -80,7 +85,9 @@ async def status(ctx, sport):
 async def refresh(ctx):
     ''' Refreshes last data request command with output of live data '''
     if ctx.author not in recent_commands:
-        await ctx.author.send('`You have not made a valid data request yet. See !commands for information.`')
+        message = await ctx.author.send('`You have not made a valid data request yet. See !commands for information.`')
+        time.sleep(10)
+        await message.delete()
         return
    
     sport, event_name, market_name, market_id, price_data = recent_commands[ctx.author]
@@ -239,6 +246,8 @@ async def motorsport(ctx, flag : str = 'EX_BEST_OFFERS'):
 async def on_ready():
     '''Spools up services/background tasks for discord bot'''
     print('Discord bot: ONLINE')
+    # Clear all PMs
+    # Clear all channels
 
 
 bot.run(credentials['token'])
