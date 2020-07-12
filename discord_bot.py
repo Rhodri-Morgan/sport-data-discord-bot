@@ -90,7 +90,7 @@ async def refresh(ctx):
 async def menu_selection(user, channel, options):
     ''' Loop for user to enter menu selection ''' 
     def check(message):
-        return message.author == user
+        return message.author == user and message.channel.id == channel.id
 
     while True:
         response = await bot.wait_for('message', check=check)
