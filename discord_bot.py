@@ -7,6 +7,7 @@ import shutil
 from datetime import datetime, timedelta
 
 import betfair_api
+import graph_producer
 import discord
 import asyncio
 from discord.ext import commands
@@ -16,12 +17,17 @@ from discord.enums import ChannelType
 
 bot = commands.Bot(command_prefix='!')
 betfair = betfair_api.BetFairAPI()
+graph = graph_producer.GraphProducer()
 
 with open(os.path.join(os.getcwd(), 'credentials.json')) as f:
     credentials = json.loads(f.read())['discord']
 
 default_price_data = 'EX_BEST_OFFERS'
 recent_commands = {}
+
+IMAGES_CACHE_SIZE = 100
+images = os.path.join(os.getcwd(), 'temp_images')
+images_cnt = 0
 
 
 @bot.command()
@@ -99,8 +105,8 @@ async def refresh(ctx):
     async with ctx.typing(): 
         market_book = betfair.get_market_book(market_id, price_data)
         market_runners_names = betfair.get_runners_names(market_id)
-        protabilities_dict = betfair.calculate_runners_probability(market_book.runners, market_runners_names)
-        await display_data(ctx.author, sport, protabilities_dict, event_name, market_name, price_data)
+        probabilities_dict = betfair.calculate_runners_probability(market_book.runners, market_runners_names)
+        await display_data(ctx.author, sport, probabilities_dict, event_name, market_name, price_data)
 
 
 async def message_length_check(user, original_str, appended_str):
@@ -140,7 +146,7 @@ async def user_select_event(user, sport, events):
 
     events_str = 'Available {0} events: \n'.format(sport)
     for cnt, event in enumerate(events, start=1):
-        temp_events_str = '{0} - {1}\n'.format(str(cnt), event.event.name)
+        temp_events_str = '{0} - {1}\n'.format(str(cnt), event.event.name.strip())
         events_str = await message_length_check(user, events_str, temp_events_str)
     
     events_str = await message_length_check(user, events_str, '\nPlease enter an option below.')
@@ -163,7 +169,7 @@ async def user_select_market(user, event, markets):
 
     event_str = 'Available markets for {0}: \n'.format(event.name)
     for cnt, market in enumerate(markets, start=1):
-        temp_event_str = '{0} - {1}\n'.format(str(cnt), market.market_name)
+        temp_event_str = '{0} - {1}\n'.format(str(cnt), market.market_name.strip())
         event_str = await message_length_check(user, event_str, temp_event_str)
     
     event_str = await message_length_check(user, event_str, '\nPlease enter an option below.')
@@ -178,9 +184,16 @@ async def user_select_market(user, event, markets):
         return markets[response-1]
 
 
-async def display_data(user, sport, protabilities_dict, event_name, market_name, price_data):
+async def save_graph(figure):
+    global images_cnt
+    figure.savefig(os.path.join(images, 'image{0}.png'.format(images_cnt)))
+    images_cnt += 1
+    return os.path.join(images, 'image{0}.png'.format(images_cnt-1))
+
+
+async def display_data(user, sport, probabilities_dict, event_name, market_name, price_data):
     ''' Displays data as precentages for event and market '''
-    if all(math.isnan(value) for value in protabilities_dict.values()):
+    if all(math.isnan(value) for value in probabilities_dict.values()):
         await user.send('`Currently there is no valid data for {0} - {1} ({2}).`'.format(event_name, market_name, price_data))
         return
 
@@ -190,12 +203,12 @@ async def display_data(user, sport, protabilities_dict, event_name, market_name,
                                                                                                                                       price_data, 
                                                                                                                                       current_datetime,
                                                                                                                                       user.display_name)
-    for key, value in protabilities_dict.items():
-        if not math.isnan(value):
-            probabilities_str = '{0}{1} - {2}%\n'.format(probabilities_str, key, value)
+    for key, value in probabilities_dict.items():
+        probabilities_str = '{0}{1} - {2}%\n'.format(probabilities_str, key, value)
     probabilities_str = '```{0}```'.format(probabilities_str)
 
-    await user.send(probabilities_str)
+    barplot = await save_graph(graph.barplot(event_name, market_name, current_datetime, probabilities_dict))
+    await user.send(probabilities_str, file=discord.File(barplot))
 
 
 async def process_price_data_flag(user, flag):
@@ -244,8 +257,8 @@ async def sport(ctx, flag, sport):
         price_data = await process_price_data_flag(ctx.author, flag)
         market_book = betfair.get_market_book(event_market.market_id, price_data)
         market_runners_names = betfair.get_runners_names(event_market.market_id)        
-        protabilities_dict = betfair.calculate_runners_probability(market_book.runners, market_runners_names)
-        await display_data(ctx.author, sport, protabilities_dict, event.event.name, event_market.market_name, price_data)
+        probabilities_dict = betfair.calculate_runners_probability(market_book.runners, market_runners_names)
+        await display_data(ctx.author, sport, probabilities_dict, event.event.name, event_market.market_name, price_data)
         recent_commands[ctx.author] = (sport, event.event.name, event_market.market_name, event_market.market_id, price_data)
 
 
@@ -259,6 +272,9 @@ async def motorsport(ctx, flag : str = default_price_data):
 async def on_ready():
     '''Spools up services/background tasks for discord bot'''
     print('Discord bot: ONLINE')
+    if os.path.exists(images):
+        shutil.rmtree(images)
+    os.mkdir(images)
 
 
 bot.run(credentials['token'])

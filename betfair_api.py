@@ -15,7 +15,7 @@ class BetFairAPI:
 
         self.trading = betfairlightweight.APIClient(username=credentials['username'],
                                                 password=credentials['password'],
-                                                app_key=credentials['delayed_app_key'],
+                                                app_key=credentials['live_app_key'],
                                                 certs=certifications)
         self.trading.login()
 
@@ -65,12 +65,10 @@ class BetFairAPI:
             name = runners_names[runner.selection_id]
             last_price_traded = runner.last_price_traded
 
-            if last_price_traded is None:
-                probability_dict[name] = math.nan
-            else:
+            if last_price_traded is not None:
                 probability_dict[name] = round(((1/last_price_traded) * 100), 2)
 
-        return probability_dict 
+        return {k: v for k, v in sorted(probability_dict.items(), key=lambda item: item[1], reverse=True)} 
     
   
     def get_runners_names(self, market_id):
