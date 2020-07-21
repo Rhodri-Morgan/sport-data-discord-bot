@@ -20,14 +20,13 @@ class BetFairAPI:
         self.trading.login()
 
 
-    def get_events(self, sport):
-        ''' Returns event_result objects for a sport 
-            param sport:
-                Motor Sport - Formula 1 and other driving/racing based sports.
-        '''
-        if sport not in ['Motor Sport']:
-            raise Exception('Invalid sport for get_events() check function comments.')
+    def get_event_types(self):
+        ''' Returns event types hosted by BetFair ''' 
+        return self.trading.betting.list_event_types()
 
+
+    def get_events(self, sport):
+        ''' Returns event_result objects for a sport  '''
         sport_filter = betfairlightweight.filters.market_filter(text_query=sport)
         sport_event_type_id = self.trading.betting.list_event_types(filter=sport_filter)[0].event_type.id
         sport_event_filter = betfairlightweight.filters.market_filter(event_type_ids=[sport_event_type_id])
