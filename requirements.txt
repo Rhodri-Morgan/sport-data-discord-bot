@@ -1,11 +1,8 @@
-<<<<<<< HEAD
 discord.py==1.3.4
-=======
 betfairlightweight==2.5.0
 matplotlib==3.2.2
 discord.py==1.3.3
 yagmail==0.11.224
->>>>>>> 1162c52500bed36350d9c6d649dd007edb8d806d
 numpy==1.19.0
 betfairlightweight==2.5.0
 matplotlib==3.2.2
