@@ -100,10 +100,10 @@ async def message_length_check(user, original_str, appended_str):
         return '{0}{1}'.format(original_str, appended_str)
 
 
-async def save_graph(figure):
+async def save_graph(plt):
     ''' Saves graph image to temporary location '''
     global images_cnt
-    figure.savefig(os.path.join(images, 'image{0}.png'.format(images_cnt)))
+    plt.savefig(os.path.join(images, 'image{0}.png'.format(images_cnt)), facecolor="#36393f")
     images_cnt += 1
     return os.path.join(images, 'image{0}.png'.format(images_cnt-1))
 

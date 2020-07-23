@@ -1,6 +1,10 @@
 import matplotlib.pyplot as plt
+from matplotlib import font_manager as fm, rcParams
 import numpy as np
 import math
+import os
+
+import json
 
 
 class GraphProducer:
@@ -16,23 +20,53 @@ class GraphProducer:
                         '#b5004a', '#b80048', '#ba0045', '#bd0042', '#bf0040', '#c2003d', '#c4003b', '#c70038', '#c90036', '#cc0033', 
                         '#ce0030', '#d1002e', '#d3002b', '#d60029', '#d80026', '#db0024', '#de0021', '#e0001e', '#e3001c', '#e50019', 
                         '#e80017', '#ea0014', '#ed0012', '#ef000f', '#f2000c', '#f4000a', '#f70007', '#f90005', '#fc0002', '#ff0000']
+        self.large_font = fm.FontProperties(fname=os.path.join(os.getcwd(), 'sources\Whitney Medium.ttf'), size=16)
+        self.medium_font = fm.FontProperties(fname=os.path.join(os.getcwd(), 'sources\Whitney Medium.ttf'), size=12)
+        self.small_font = fm.FontProperties(fname=os.path.join(os.getcwd(), 'sources\Whitney Medium.ttf'), size=10)
+
+
+    def preprocess_data(self, probabilities_dict):
+        max_key = None
+        removed_keys = []
+        cumulative_values = 0.0
+        for key, value in probabilities_dict.items():
+            if max_key is None or len(key) > len(max_key):
+                max_key = key
+            if value < 1.0:
+                removed_keys.append(key)
+                cumulative_values += value
+
+        if cumulative_values != 0.0:
+            [probabilities_dict.pop(key) for key in removed_keys] 
+            probabilities_dict['Cumulative Other (< 1%)'] = cumulative_values
+            if len(max_key) < len('Cumulative Other (< 1%)'):
+                max_key = 'Cumulative Other (< 1%)'
+        return max_key, probabilities_dict
+
 
     def barplot(self, event_name, market_name, datetime, probabilities_dict):
+        max_key, probabilities_dict = self.preprocess_data(probabilities_dict)
+
         barplot_colours = []
         for value in probabilities_dict.values():
             barplot_colours.append(self.colours[math.ceil(value)-1])
 
-        fig, ax = plt.subplots()
+        width = 8.4 if len(probabilities_dict)/0.476 < 8.4 else len(probabilities_dict)/0.476
+        height = 8.4 if len(max_key)/3.09 < 8.4 else len(max_key)/3.09
+
+        fig, ax = plt.subplots(figsize=(width, height))
+        ax.patch.set_facecolor('#36393f')
         plt.bar(probabilities_dict.keys(), probabilities_dict.values(), align='center', color=barplot_colours)
-        plt.title(event_name + ' - ' + market_name)
-        plt.xticks(rotation=90, fontsize=8)
-        plt.xlabel(event_name + ' runners')
-        plt.yticks(np.arange(0, 101, step=5), fontsize=8)
-        plt.ylabel(market_name + ' %')
-        ax.text(0.99, 0.99, 'Source - Betfair.com API\nDate Processed (UTC) - {0}'.format(datetime), fontsize=6,
+        plt.xticks(rotation=90, color='white', fontproperties=self.medium_font)
+        plt.xlabel('\n' + event_name + ' runners', color='white', fontproperties=self.large_font)
+        plt.yticks(np.arange(0, 101, step=5), fontsize=8, color='white', fontproperties=self.medium_font)
+        plt.ylabel(market_name + ' %', color='white', fontproperties=self.large_font)
+        ax.text(0.99, 0.99, 'Source - Betfair.com API\nDate Processed (UTC) - {0}'.format(datetime), 
+                fontproperties=self.small_font,
+                color='white',
                 horizontalalignment='right',
                 verticalalignment='top',
                 transform=ax.transAxes)
         plt.tight_layout()
         return plt
-        
+    
