@@ -20,9 +20,9 @@ class GraphProducer:
                         '#b5004a', '#b80048', '#ba0045', '#bd0042', '#bf0040', '#c2003d', '#c4003b', '#c70038', '#c90036', '#cc0033', 
                         '#ce0030', '#d1002e', '#d3002b', '#d60029', '#d80026', '#db0024', '#de0021', '#e0001e', '#e3001c', '#e50019', 
                         '#e80017', '#ea0014', '#ed0012', '#ef000f', '#f2000c', '#f4000a', '#f70007', '#f90005', '#fc0002', '#ff0000']
-        self.large_font = fm.FontProperties(fname=os.path.join(os.getcwd(), 'sources\Whitney Medium.ttf'), size=16)
-        self.medium_font = fm.FontProperties(fname=os.path.join(os.getcwd(), 'sources\Whitney Medium.ttf'), size=12)
-        self.small_font = fm.FontProperties(fname=os.path.join(os.getcwd(), 'sources\Whitney Medium.ttf'), size=10)
+        self.large_font = fm.FontProperties(fname=os.path.join(os.getcwd(), 'sources', 'Whitney Medium.ttf'), size=16)
+        self.medium_font = fm.FontProperties(fname=os.path.join(os.getcwd(), 'sources', 'Whitney Medium.ttf'), size=12)
+        self.small_font = fm.FontProperties(fname=os.path.join(os.getcwd(), 'sources', 'Whitney Medium.ttf'), size=10)
 
 
     def preprocess_data(self, probabilities_dict):
@@ -58,9 +58,9 @@ class GraphProducer:
         ax.patch.set_facecolor('#36393f')
         plt.bar(probabilities_dict.keys(), probabilities_dict.values(), align='center', color=barplot_colours)
         plt.xticks(rotation=90, color='white', fontproperties=self.medium_font)
-        plt.xlabel('\n' + event_name + ' runners', color='white', fontproperties=self.large_font)
+        plt.xlabel('\n' + event_name + ' Runners', color='white', fontproperties=self.large_font)
         plt.yticks(np.arange(0, 101, step=5), fontsize=8, color='white', fontproperties=self.medium_font)
-        plt.ylabel(market_name + ' %', color='white', fontproperties=self.large_font)
+        plt.ylabel(market_name + ' (%)', color='white', fontproperties=self.large_font)
         ax.text(0.99, 0.99, 'Source - Betfair.com API\nDate Processed (UTC) - {0}'.format(datetime), 
                 fontproperties=self.small_font,
                 color='white',
