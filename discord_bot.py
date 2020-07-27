@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 
 import betfair_api
 import graph_producer
+import dropbox_api
 import discord
 import asyncio
 import yagmail
@@ -19,10 +20,11 @@ from discord.enums import ChannelType
 bot = commands.Bot(command_prefix='!')
 betfair = betfair_api.BetFairAPI()
 graph = graph_producer.GraphProducer()
+dropbox = dropbox_api.DropBoxAPI()
 
 with open(os.path.join(os.getcwd(), 'credentials.json')) as f:
     credentials = json.loads(f.read())
-    email_credentials = credentials['email']
+    google_credentials = credentials['google']
     discord_credentials = credentials['discord']
 
 default_price_data = 'EX_BEST_OFFERS'
@@ -79,7 +81,7 @@ async def bug(ctx):
         return
     
     current_datetime = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
-    yag.send(to=email_credentials['email'], subject='Bug Report ' + current_datetime + ' ' + ctx.author, contents=[response.content])
+    yag.send(to=google_credentials['email'], subject='Bug Report ' + current_datetime + ' ' + ctx.author, contents=[response.content])
     await ctx.author.send('`Thank you for your report. It has been sent to the author.`')
 
 
@@ -323,6 +325,11 @@ async def football(ctx, flag : str = default_price_data):
     await process_sport(ctx, flag, 'Soccer')
 
 
+@loop(hours=1)
+async def upload_user_commands():
+    dropbox.upload(user_commands, '/user_commands.json')
+
+
 @bot.event
 async def on_ready():
     '''Spools up services/background tasks for discord bot'''
@@ -331,13 +338,15 @@ async def on_ready():
         shutil.rmtree(images)
     os.mkdir(images)
 
-    if not os.path.exists(user_commands):
+    if not dropbox.check_path_exists('/user_commands.json'):
         with open(user_commands, 'w') as f:
             empty = {}
             json.dump(empty, f)
+    else:
+        dropbox.download_file('/user_commands.json')
 
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='Sport BetFair API'))
 
 
-yag = yagmail.SMTP(user=email_credentials['email'], password=email_credentials['password'])
+yag = yagmail.SMTP(user=google_credentials['email'], password=google_credentials['password'])
 bot.run(discord_credentials['token'])
