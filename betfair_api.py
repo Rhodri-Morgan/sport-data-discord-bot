@@ -41,20 +41,9 @@ class BetFairAPI:
                                                           sort='FIRST_TO_START')
 
 
-    def get_market_book(self, market_id, price_data):
-        ''' Returns market_book object for a given event_id with a price_data filter applied 
-            param price_data: 
-                SP_AVAILABLE - Amount available for the BSP auction.
-                SP_TRADED - Amount traded in the BSP auction.
-                EX_BEST_OFFERS - Only the best prices available for each runner, to requested price depth.
-                EX_ALL_OFFERS - EX_ALL_OFFERS trumps EX_BEST_OFFERS if both settings are present
-                EX_TRADED - Amount traded on the exchange.
-        '''
-        if price_data not in ['SP_AVAILABLE', 'SP_TRADED', 'EX_BEST_OFFERS', 'EX_ALL_OFFERS', 'EX_TRADED']:
-            raise Exception('Invalid price_data for get_runners_market_data() check function comments.')
-        
-        price_filter = betfairlightweight.filters.price_projection(price_data=[price_data])
-        return self.trading.betting.list_market_book(market_ids=[market_id], price_projection=price_filter)[0]
+    def get_market_book(self, market_id):
+        ''' Returns market_book object for a given event_id '''
+        return self.trading.betting.list_market_book(market_ids=[market_id])[0]
 
 
     def calculate_runners_probability(self, runners, runners_names):

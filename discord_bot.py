@@ -27,9 +27,9 @@ with open(os.path.join(os.getcwd(), 'credentials.json')) as f:
     google_credentials = credentials['google']
     discord_credentials = credentials['discord']
 
-default_price_data = 'EX_BEST_OFFERS'
 user_commands = os.path.join(os.getcwd(), 'user_commands.json')
-images = os.path.join(os.getcwd(), 'temp_images')
+images = os.path.join(os.getcwd(), 'images')
+sport_data = os.path.join(os.getcwd(), 'sport_data')
 images_cnt = 0
 
 
@@ -40,22 +40,15 @@ async def commands(ctx):
         return
 
     commands = 'Use ! to begin a command. Commands must all be in lowercase.\n' + \
-               'Use -- to begin a flag after a command. Flags must have no spaces.\n\n' + \
-               '!commands - Displays a list of available commands/flags for the bot.\n' + \
+               '!commands - Displays a list of available commands for the bot.\n' + \
                '!bug - Reporting bugs to the bot creator for diagnosis.\n'+ \
                '!clear - Deletes all bot generated messages (not users messages).\n\n'+ \
-               '!sport [optional flags] - Menu for choosing sport and then navigating all events.\n'+ \
-               '!motorsport [optional flags] - Menu for navigating motorsport events.\n'+ \
-               '!rugby [optional flags] - Menu for navigating rugby union events.\n'+ \
-               '!football [optional flags] - Menu for navigating football events.\n'+ \
-                '!refresh - Reruns last data request command to retrieve most recent data utilising originally selected criteria (event, market, price_data, ...).\n\n'+ \
-                '--price data - Filters data according to some criteria, default if not specified = EX_BEST_OFFERS.\n'+ \
-                '               SP_AVAILABLE - Amount available for the BSP auction.\n'+ \
-                '               SP_TRADED - Amount traded in the BSP auction.\n'+ \
-                '               EX_BEST_OFFERS - Only the best prices available for each runner, to requested price depth.\n'+ \
-                '               EX_ALL_OFFERS - Trumps EX_BEST_OFFERS if both settings are present.\n' + \
-                '               EX_TRADED - Amount traded on the exchange.'
-    
+               '!sport - Menu for choosing sport and then navigating all events.\n'+ \
+               '!motorsport - Menu for navigating motorsport events.\n'+ \
+               '!rugby - Menu for navigating rugby union events.\n'+ \
+               '!football - Menu for navigating football events.\n'+ \
+               '!refresh - Reruns last data request command to retrieve most recent data utilising originally selected criteria (sport, event, market).'
+            
     async for message in ctx.author.history(limit=None):
         if message.pinned:
             await message.delete()
@@ -110,9 +103,9 @@ async def save_graph(plt):
     return os.path.join(images, 'image{0}.png'.format(images_cnt-1))
 
 
-async def save_user_command(user, sport, event_name, market_name, market_id, price_data):
+async def save_user_command(user, sport, event_name, market_name, market_id):
     ''' Saves user's last command '''
-    appended_data = {str(user) : {'sport':sport, 'event_name':event_name, 'market_name':market_name, 'market_id':market_id, 'price_data':price_data}}
+    appended_data = {str(user) : {'sport':sport, 'event_name':event_name, 'market_name':market_name, 'market_id':market_id}}
     with open(user_commands) as f:
         existing_data = json.load(f)
     merged_data = {**existing_data, **appended_data}
@@ -219,18 +212,17 @@ async def user_select_market(user, event, markets):
         return markets[response-1]
 
 
-async def display_data(user, sport, probabilities_dict, event_name, market_name, price_data):
+async def display_data(user, sport, probabilities_dict, event_name, market_name):
     ''' Displays data as precentages for event and market '''
     if all(math.isnan(value) for value in probabilities_dict.values()):
-        await user.send('`Currently there is no valid data for {0} - {1} ({2}).`'.format(event_name, market_name, price_data))
+        await user.send('`Currently there is no valid data for {0} - {1}.`'.format(event_name, market_name))
         return
 
     current_datetime = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
-    probabilities_str = 'Event - {0}\nMarket - {1}\nPrice Data - {2}\nProcessed Datetime(UTC) - {3}\nRequested User - {4}\n\n'.format(event_name, 
-                                                                                                                                      market_name,
-                                                                                                                                      price_data, 
-                                                                                                                                      current_datetime,
-                                                                                                                                      user.display_name)
+    probabilities_str = 'Event - {0}\nMarket - {1}\nProcessed Datetime(UTC) - {2}\nRequested User - {3}\n\n'.format(event_name, 
+                                                                                                                    market_name, 
+                                                                                                                    current_datetime,
+                                                                                                                    user.display_name)
     for key, value in probabilities_dict.items():
         temp_probabilities_str =  '{0} - {1}%\n'.format(key, value)
         probabilities_str = await message_length_check(user, probabilities_str, temp_probabilities_str)
@@ -242,26 +234,7 @@ async def display_data(user, sport, probabilities_dict, event_name, market_name,
     os.remove(barplot)
 
 
-async def process_price_data_flag(user, flag):
-    ''' Processes the user price_data flag for validity and returns price data string '''
-    price_data = ['--price_data=SP_AVAILABLE', 
-                  '--price_data=SP_TRADED',
-                  '--price_data=EX_BEST_OFFERS',
-                  '--price_data=EX_ALL_OFFERS',
-                  '--price_data=EX_TRADED']
-
-    if flag == default_price_data:
-        return flag
-    elif flag in price_data:
-        return flag.strip('--prince_data=')
-    elif flag.startswith('--price_data='):
-        await user.send('`Invalid price_data selection. Defaulted to {0}. See !commands for more information`'.format(default_price_data))
-    else:
-        await user.send('`Unrecognised flag. Defaulted to {0}. See !commands for more information`'.format(default_price_data))
-    return default_price_data
-
-
-async def process_sport(ctx, flag, sport):
+async def process_sport(ctx, sport):
     ''' Provides functionality to select and view data breakdown for an event market '''
     if not ctx.channel.type == ChannelType.private:
         return
@@ -277,12 +250,11 @@ async def process_sport(ctx, flag, sport):
         if event_market is None:
             return
         
-        price_data = await process_price_data_flag(ctx.author, flag)
-        market_book = betfair.get_market_book(event_market.market_id, price_data)
+        market_book = betfair.get_market_book(event_market.market_id)
         market_runners_names = betfair.get_runners_names(event_market.market_id)        
         probabilities_dict = betfair.calculate_runners_probability(market_book.runners, market_runners_names)
-        await display_data(ctx.author, sport, probabilities_dict, event.event.name, event_market.market_name, price_data)
-        await save_user_command(ctx.author, sport, event.event.name, event_market.market_name, event_market.market_id, price_data)
+        await display_data(ctx.author, sport, probabilities_dict, event.event.name, event_market.market_name)
+        await save_user_command(ctx.author, sport, event.event.name, event_market.market_name, event_market.market_id)
 
 
 @bot.command()
@@ -294,58 +266,96 @@ async def refresh(ctx):
         return
 
     async with ctx.typing(): 
-        market_book = betfair.get_market_book(command_data['market_id'], command_data['price_data'])
+        market_book = betfair.get_market_book(command_data['market_id'])
         market_runners_names = betfair.get_runners_names(command_data['market_id'])
         probabilities_dict = betfair.calculate_runners_probability(market_book.runners, market_runners_names)
-        await display_data(ctx.author, command_data['sport'], probabilities_dict, command_data['event_name'], command_data['market_name'], command_data['price_data'])
+        await display_data(ctx.author, command_data['sport'], probabilities_dict, command_data['event_name'], command_data['market_name'])
 
 
 @bot.command()
-async def sport(ctx, flag : str = default_price_data):
+async def sport(ctx):
     '''' Process user designated sport request '''
     if ctx.channel.type == ChannelType.private:
-        await process_sport(ctx, flag, await user_select_sport(ctx.author, betfair.get_event_types()))
+        await process_sport(ctx, await user_select_sport(ctx.author, betfair.get_event_types()))
 
 
 @bot.command()
-async def motorsport(ctx, flag : str = default_price_data):
+async def motorsport(ctx):
     ''' Process Motor Sport request '''
-    await process_sport(ctx, flag, 'Motor Sport')
+    await process_sport(ctx, 'Motor Sport')
 
 
 @bot.command()
-async def rugby(ctx, flag : str = default_price_data):
+async def rugby(ctx):
     ''' Process Rugby Union request '''
-    await process_sport(ctx, flag, 'Rugby Union')
+    await process_sport(ctx, 'Rugby Union')
 
 
 @bot.command()
-async def football(ctx, flag : str = default_price_data):
+async def football(ctx):
     ''' Process Motor Sport request '''
-    await process_sport(ctx, flag, 'Soccer')
+    await process_sport(ctx, 'Soccer')
 
 
 @loop(hours=1)
 async def upload_user_commands():
+    ''' Upload user_commands to dropbox '''
     dropbox.upload(user_commands, '/user_commands.json')
+
+
+async def get_dropbox_path(sport, event_name, market_name):
+    def prepare_str(str):
+        str = re.sub('[^A-Za-z0-9 ]', '', str.lower().strip())
+        return str.replace(' ', '-')
+
+    return '/sport_data/{0}/{1}/{2}.json'.format(prepare_str(sport), 
+                                                 prepare_str(event_name),
+                                                 prepare_str(market_name))
+
+
+# @loop(hours=1)
+async def log_markets_data():
+    ''' Logs betfair market every minute data and saves to dropbox '''
+    sports = ['Motor Sport', 'Rugby Union']
+    for sport in sports:
+        events = betfair.get_events(sport)
+        for event in events:
+            event_markets = betfair.get_event_markets(event.event.id)
+            for market in event_markets:
+                dropbox_path = await get_dropbox_path(sport, event.event.name, market.market_name)        
+                local_path = os.path.join(os.getcwd(), *dropbox_path.split('/'))
+                dropbox.download_file(local_path, dropbox_path)
+
+                market_book = betfair.get_market_book(market.market_id)
+                market_runners_names = betfair.get_runners_names(market.market_id)        
+                probabilities_dict = {datetime.utcnow().strftime('%Y-%m-%d %H:%M'): betfair.calculate_runners_probability(market_book.runners, market_runners_names)}
+
+                with open(local_path) as f:
+                    existing_data = json.load(f)
+                merged_data = {**existing_data, **probabilities_dict}
+                with open(local_path, 'w') as f:
+                    json.dump(merged_data, f)
+                dropbox.upload(local_path, dropbox_path)
 
 
 @bot.event
 async def on_ready():
-    '''Spools up services/background tasks for discord bot'''
-    print('Discord bot: ONLINE')
+    '''Cleans file base and spools up services/background tasks for discord bot'''
+    print('Discord bot => ONLINE')
+    
     if os.path.exists(images):
         shutil.rmtree(images)
     os.mkdir(images)
 
-    if not dropbox.check_path_exists('/user_commands.json'):
-        with open(user_commands, 'w') as f:
-            empty = {}
-            json.dump(empty, f)
-    else:
-        dropbox.download_file('/user_commands.json')
+    if os.path.exists(sport_data):
+        shutil.rmtree(sport_data)
+    
+    if os.path.exists(user_commands):
+        os.remove(user_commands)
+    dropbox.download_file(None, '/user_commands.json')
 
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='Sport BetFair API'))
+    # await log_markets_data()
 
 
 yag = yagmail.SMTP(user=google_credentials['email'], password=google_credentials['password'])
