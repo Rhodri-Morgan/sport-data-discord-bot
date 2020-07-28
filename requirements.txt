@@ -1,5 +1,7 @@
-discord.py==1.3.4
-betfairlightweight==2.5.0
 matplotlib==3.2.2
-numpy==1.19.0
+dropbox==10.3.0
 yagmail==0.11.224
+betfairlightweight==2.5.0
+discord.py==1.3.4
+numpy==1.19.0
+discord==1.0.1
