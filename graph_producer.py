@@ -102,12 +102,12 @@ class GraphProducer:
         if sum(probabilities_dict.values()) < 90:
             return None
 
-        fig, ax = plt.subplots(figsize=(6.4, 6.4))
+        fig, ax = plt.subplots(figsize=(12.8, 12.8))
         fig.clf()
 
         explode = [0.0 for x in probabilities_dict.values()]
         explode[0] = 0.1
         plt.pie(probabilities_dict.values(), labels=probabilities_dict.keys(), shadow=True, explode=explode, 
                 autopct='%1.1f%%', textprops={'fontproperties': self.medium_font, 'color': 'white'})
-        plt.title('{0}'.format(market_name), color='white', fontproperties=self.large_font)
+        plt.title('{0}\n{1}'.format(event_name, market_name), color='white', fontproperties=self.large_font)
         return plt
