@@ -43,8 +43,11 @@ async def commands(ctx):
 
     commands = 'Use ! to begin a command. Commands must all be in lowercase.\n' + \
                '!commands - Displays a list of available commands for the bot.\n' + \
+               '!contact - Form for contacting the creator of the bot with any questions or queries.\n'+ \
                '!bug - Reporting bugs to the bot creator for diagnosis.\n'+ \
                '!clear - Deletes all bot generated messages (not users messages).\n\n'+ \
+               '!my_data - Display data for user that is stored (via Dropbox) and utilised.\n'+ \
+               '!delete_data - Delete stored user data.\n\n'+ \
                '!sport - Menu for choosing sport and then navigating all events.\n'+ \
                '!motorsport - Menu for navigating motorsport events.\n'+ \
                '!rugby - Menu for navigating rugby union events.\n'+ \
@@ -57,6 +60,86 @@ async def commands(ctx):
 
     message = await ctx.author.send('```{0}```'.format(commands))
     await message.pin()
+
+
+@bot.command()
+async def my_data(ctx):
+    print('{0} - {1} - my_data()'.format(datetime.utcnow(), ctx.author))
+
+    command_data = await get_user_command(ctx.author.id)
+
+    if not ctx.channel.type == ChannelType.private:
+        return
+    elif command_data is None:
+        await ctx.author.send('`{0}/{1} - I currently have no data stored for this account.`'.format(ctx.author.name, ctx.author.id))
+    else:
+        command_data = {ctx.author.id: command_data}
+        data_str = '{0}/{1} - I am currently storing this data via Dropbox:\n'.format(ctx.author.name, ctx.author.id)
+        data_str = '```{0}``````{1}```'.format(data_str, json.dumps(command_data, indent=4, sort_keys=True))
+        data_str = '{0}```To delete this data please use !delete_data.```'.format(data_str)
+        await ctx.author.send(data_str)
+
+
+@bot.command()
+async def delete_data(ctx):
+    print('{0} - {1} - delete_data()'.format(datetime.utcnow(), ctx.author))
+
+    command_data = await get_user_command(ctx.author.id)
+
+    if not ctx.channel.type == ChannelType.private:
+        return
+    elif command_data is None:
+        await ctx.author.send('`{0}/{1} - I currently have no data stored for this account.`'.format(ctx.author.name, ctx.author.id))
+    else:
+        command_data = {ctx.author.id: command_data}
+        data_str = '{0}/{1} - I am currently storing this data via Dropbox:\n'.format(ctx.author.name, ctx.author.id)
+        data_str = '```{0}``````{1}```'.format(data_str, json.dumps(command_data, indent=4, sort_keys=True))
+        data_str = '{0}```Would you like to delete this data y/n?```'.format(data_str)
+        await ctx.author.send(data_str)
+
+        def check(message):
+            return message.author == ctx.author and message.channel.type == ChannelType.private
+
+        while True:
+            try:
+                response = await bot.wait_for('message', timeout=60.0, check=check)
+            except asyncio.TimeoutError:
+                await ctx.author.send('`Error deletion request has timed out. Please try again.`')
+                return None
+            
+            if response.content.strip().lower() == 'y':
+                await delete_user_command(ctx.author.id)
+                await ctx.author.send('`{0}/{1} data has been deleted. Please note if you use this bot again in the future it will start logging data.`'.format(ctx.author.name, ctx.author.id))
+                break
+            elif response.content.strip().lower() == 'n' or response.content.strip().lower() == 'exit':
+                await ctx.author.send('`{0}/{1} data has not been deleted.`'.format(ctx.author.name, ctx.author.id))
+                break
+            else:
+                await user.send('`Error please make another selection or type \'exit\'.`')
+                break
+
+
+@bot.command()
+async def contact(ctx):
+    ''' Sends email to dedicated email address for managing request/queries '''
+    print('{0} - {1} - contact()'.format(datetime.utcnow(), ctx.author))
+
+    if not ctx.channel.type == ChannelType.private:
+        return
+
+    await ctx.author.send('`Please enter message below (if attaching images please use mediator such as imgur). This form will timeout in 60 seconds.`')
+
+    def check(message):
+        return message.author == ctx.author and message.channel.type == ChannelType.private
+    try:
+        response = await bot.wait_for('message', timeout=60.0, check=check)
+    except asyncio.TimeoutError:
+        await ctx.author.send('`Error contact form has timed out. Please try again.`')
+        return
+    
+    current_datetime = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    yag.send(to=google_credentials['email'], subject='Query ' + current_datetime + ' ' + ctx.author.id, contents=[response.content])
+    await ctx.author.send('`Your query been sent to the author.`')
 
 
 @bot.command()
@@ -74,11 +157,11 @@ async def bug(ctx):
     try:
         response = await bot.wait_for('message', timeout=60.0, check=check)
     except asyncio.TimeoutError:
-        await user.send('`Error bug report has timed out. Please try again.`')
+        await ctx.author.send('`Error bug report has timed out. Please try again.`')
         return
     
     current_datetime = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
-    yag.send(to=google_credentials['email'], subject='Bug Report ' + current_datetime + ' ' + ctx.author, contents=[response.content])
+    yag.send(to=google_credentials['email'], subject='Bug Report ' + current_datetime + ' ' + ctx.author.id, contents=[response.content])
     await ctx.author.send('`Thank you for your report. It has been sent to the author.`')
 
 
@@ -109,9 +192,9 @@ async def save_graph(plt):
     return os.path.join(temp_images, 'image{0}.png'.format(images_cnt-1))
 
 
-async def save_user_command(user, sport, event_name, market_name, market_id):
+async def save_user_command(user_id, sport, event_name, market_name, market_id):
     ''' Saves user's last command '''
-    appended_data = {str(user) : {'sport':sport, 'event_name':event_name, 'market_name':market_name, 'market_id':market_id}}
+    appended_data = {user_id : {'sport':sport, 'event_name':event_name, 'market_name':market_name, 'market_id':market_id}}
     with open(user_commands) as f:
         existing_data = json.load(f)
     merged_data = {**existing_data, **appended_data}
@@ -119,14 +202,24 @@ async def save_user_command(user, sport, event_name, market_name, market_id):
         json.dump(merged_data, f)
 
 
-async def get_user_command(user):
+async def delete_user_command(user_id):
+    ''' Saves user's last command '''
+    with open(user_commands) as f:
+        data = json.load(f)
+    data.pop(str(user_id))
+    with open(user_commands, 'w') as f:
+        json.dump(data, f)
+    dropbox.upload_file(user_commands, '/user_commands.json')
+
+
+async def get_user_command(user_id):
     ''' Gets stored user's last command '''
     with open(user_commands) as f:
         data = json.load(f)
-        if str(user) not in data.keys():
-            await user.send('`You have not made a valid data request yet.`')
+        if str(user_id) not in data.keys():
+            return None
         else:
-            return data[str(user)]
+            return data[str(user_id)]
 
 
 async def menu_selection(user, options):
@@ -268,7 +361,7 @@ async def process_sport(ctx, sport):
         market_runners_names = betfair.get_runners_names(event_market.market_id)        
         probabilities_dict = betfair.calculate_runners_probability(market_book.runners, market_runners_names)
         await display_data(ctx.author, sport, probabilities_dict, event.event.name, event_market.market_name)
-        await save_user_command(ctx.author, sport, event.event.name, event_market.market_name, event_market.market_id)
+        await save_user_command(ctx.author.id, sport, event.event.name, event_market.market_name, event_market.market_id)
 
 
 @bot.command()
@@ -276,10 +369,12 @@ async def refresh(ctx):
     ''' Refreshes last data request command with output of live data '''
     print('{0} - {1} - refresh()'.format(datetime.utcnow(), ctx.author))
 
-    command_data = await get_user_command(ctx.author)
+    command_data = await get_user_command(ctx.author.id)
 
-    if command_data is None or not ctx.channel.type == ChannelType.private:
+    if not ctx.channel.type == ChannelType.private:
         return
+    elif command_data is None:
+        await ctx.author.send('`You have not made a valid data request yet.`')
 
     async with ctx.typing(): 
         market_book = betfair.get_market_book(command_data['market_id'])
@@ -317,10 +412,10 @@ async def football(ctx):
     await process_sport(ctx, 'Soccer')
 
 
-@loop(minutes=1)
+@loop(minutes=5)
 async def upload_user_commands():
     ''' Upload user_commands to dropbox '''
-    print('{0} - upload_user_commands()'.format(datetime.utcnow(), ctx.author))
+    print('{0} - upload_user_commands()'.format(datetime.utcnow()))
     dropbox.upload_file(user_commands, '/user_commands.json')
 
 
