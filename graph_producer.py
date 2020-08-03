@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 from matplotlib import font_manager as fm, rcParams
+import matplotlib.gridspec as gridspec
 import numpy as np
 import math
 import os
@@ -53,20 +54,57 @@ class GraphProducer:
 
         width = 8.4 if len(probabilities_dict)/0.476 < 8.4 else len(probabilities_dict)/0.476
         height = 8.4 if len(max_key)/3.09 < 8.4 else len(max_key)/3.09
+        height += 5
 
         fig, ax = plt.subplots(figsize=(width, height))
-        ax.patch.set_facecolor('#36393f')
+        gs = gridspec.GridSpec(2, 1, width_ratios=[1], height_ratios=[height,height/20])
+        fig.clf()
+        ax1 = fig.add_subplot(gs[0])
+        ax2 = fig.add_subplot(gs[1])
+
+        ax1.patch.set_facecolor('#36393f')
+        ax2.patch.set_facecolor('#36393f')
+
+        plt.sca(ax1)
         plt.bar(probabilities_dict.keys(), probabilities_dict.values(), align='center', color=barplot_colours)
         plt.xticks(rotation=90, color='white', fontproperties=self.medium_font)
-        plt.xlabel('\n' + event_name + ' Runners', color='white', fontproperties=self.large_font)
+        plt.xlabel('\n' + event_name + ' Runners\n\n', color='white', fontproperties=self.large_font)
         plt.yticks(np.arange(0, 101, step=5), fontsize=8, color='white', fontproperties=self.medium_font)
         plt.ylabel(market_name + ' (%)', color='white', fontproperties=self.large_font)
-        ax.text(0.99, 0.99, 'Source - Betfair.com API\nDate Processed (UTC) - {0}'.format(datetime), 
+        plt.text(0.99, 0.99, 'Source - Betfair.com API\nDate Processed (UTC) - {0}'.format(datetime), 
                 fontproperties=self.small_font,
                 color='white',
                 horizontalalignment='right',
                 verticalalignment='top',
-                transform=ax.transAxes)
+                transform=ax1.transAxes)
         plt.tight_layout()
-        return plt
+
+        plt.sca(ax2)
+        plt.bar([x for x in range(100)], [100 for x in range(100)], align='center', width=1.0, color=self.colours)
+        plt.box(False)
+        x_ticks = ['' for x in range(100)]
+        x_ticks[0] = '0%'
+        x_ticks[49] = '50%'
+        x_ticks[99] = '100%'
+        plt.tick_params(length=0)
+        plt.xticks(np.arange(100), x_ticks, color='white', fontproperties=self.small_font)
+        plt.yticks([])
+        plt.tight_layout()
+
+        return fig
+
     
+    def piechart(self, event_name, market_name, datetime, probabilities_dict):
+        max_key, probabilities_dict = self.preprocess_data(probabilities_dict)
+        if sum(probabilities_dict.values()) < 90:
+            return None
+
+        fig, ax = plt.subplots(figsize=(6.4, 6.4))
+        fig.clf()
+
+        explode = [0.0 for x in probabilities_dict.values()]
+        explode[0] = 0.1
+        plt.pie(probabilities_dict.values(), labels=probabilities_dict.keys(), shadow=True, explode=explode, 
+                autopct='%1.1f%%', textprops={'fontproperties': self.medium_font, 'color': 'white'})
+        plt.title('{0}'.format(market_name), color='white', fontproperties=self.large_font)
+        return plt

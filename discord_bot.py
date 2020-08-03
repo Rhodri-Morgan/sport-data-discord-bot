@@ -1,20 +1,21 @@
+import asyncio
 import json
 import math
 import os
 import re
-import time
 import shutil
+import time
 from datetime import datetime, timedelta
 
-import betfair_api
-import graph_producer
-import dropbox_api
 import discord
-import asyncio
 import yagmail
+from discord.enums import ChannelType
 from discord.ext import commands
 from discord.ext.tasks import loop
-from discord.enums import ChannelType
+
+import betfair_api
+import dropbox_api
+import graph_producer
 
 
 bot = commands.Bot(command_prefix='!')
@@ -28,8 +29,7 @@ with open(os.path.join(os.getcwd(), 'credentials.json')) as f:
     discord_credentials = credentials['discord']
 
 user_commands = os.path.join(os.getcwd(), 'user_commands.json')
-images = os.path.join(os.getcwd(), 'images')
-sport_data = os.path.join(os.getcwd(), 'sport_data')
+temp_images = os.path.join(os.getcwd(), 'temp_images')
 images_cnt = 0
 
 
@@ -98,9 +98,9 @@ async def message_length_check(user, original_str, appended_str):
 async def save_graph(plt):
     ''' Saves graph image to temporary location '''
     global images_cnt
-    plt.savefig(os.path.join(images, 'image{0}.png'.format(images_cnt)), facecolor="#36393f")
+    plt.savefig(os.path.join(temp_images, 'image{0}.png'.format(images_cnt)), facecolor="#36393f")
     images_cnt += 1
-    return os.path.join(images, 'image{0}.png'.format(images_cnt-1))
+    return os.path.join(temp_images, 'image{0}.png'.format(images_cnt-1))
 
 
 async def save_user_command(user, sport, event_name, market_name, market_id):
@@ -227,11 +227,19 @@ async def display_data(user, sport, probabilities_dict, event_name, market_name)
         temp_probabilities_str =  '{0} - {1}%\n'.format(key, value)
         probabilities_str = await message_length_check(user, probabilities_str, temp_probabilities_str)
 
+    probabilities_str = '{0}\nMarket Efficiency = {1}%'.format(probabilities_str, sum(probabilities_dict.values()))
     probabilities_str = '```{0}```'.format(probabilities_str)
 
-    barplot = await save_graph(graph.barplot(event_name, market_name, current_datetime, probabilities_dict))
-    await user.send(probabilities_str, file=discord.File(barplot))
-    os.remove(barplot)
+    display_images = []
+
+    barplot = graph.barplot(event_name, market_name, current_datetime, probabilities_dict)
+    piechart = graph.piechart(event_name, market_name, current_datetime, probabilities_dict)
+    if barplot is not None:
+        display_images.append(discord.File(await save_graph(barplot)))
+    if piechart is not None:
+        display_images.append(discord.File(await save_graph(piechart)))
+    
+    await user.send(probabilities_str, files=display_images)
 
 
 async def process_sport(ctx, sport):
@@ -297,65 +305,26 @@ async def football(ctx):
     await process_sport(ctx, 'Soccer')
 
 
-@loop(hours=1)
+@loop(minutes=1)
 async def upload_user_commands():
     ''' Upload user_commands to dropbox '''
-    dropbox.upload(user_commands, '/user_commands.json')
-
-
-async def get_dropbox_path(sport, event_name, market_name):
-    def prepare_str(str):
-        str = re.sub('[^A-Za-z0-9 ]', '', str.lower().strip())
-        return str.replace(' ', '-')
-
-    return '/sport_data/{0}/{1}/{2}.json'.format(prepare_str(sport), 
-                                                 prepare_str(event_name),
-                                                 prepare_str(market_name))
-
-
-# @loop(hours=1)
-async def log_markets_data():
-    ''' Logs betfair market every minute data and saves to dropbox '''
-    sports = ['Motor Sport', 'Rugby Union']
-    for sport in sports:
-        events = betfair.get_events(sport)
-        for event in events:
-            event_markets = betfair.get_event_markets(event.event.id)
-            for market in event_markets:
-                dropbox_path = await get_dropbox_path(sport, event.event.name, market.market_name)        
-                local_path = os.path.join(os.getcwd(), *dropbox_path.split('/'))
-                dropbox.download_file(local_path, dropbox_path)
-
-                market_book = betfair.get_market_book(market.market_id)
-                market_runners_names = betfair.get_runners_names(market.market_id)        
-                probabilities_dict = {datetime.utcnow().strftime('%Y-%m-%d %H:%M'): betfair.calculate_runners_probability(market_book.runners, market_runners_names)}
-
-                with open(local_path) as f:
-                    existing_data = json.load(f)
-                merged_data = {**existing_data, **probabilities_dict}
-                with open(local_path, 'w') as f:
-                    json.dump(merged_data, f)
-                dropbox.upload(local_path, dropbox_path)
+    dropbox.upload_file(user_commands, '/user_commands.json')
 
 
 @bot.event
 async def on_ready():
-    '''Cleans file base and spools up services/background tasks for discord bot'''
-    print('Discord bot => ONLINE')
-    
-    if os.path.exists(images):
-        shutil.rmtree(images)
-    os.mkdir(images)
+    '''Cleans file base and spools up services/background tasks for discord bot'''    
+    if os.path.exists(temp_images):
+        shutil.rmtree(temp_images)
+    os.mkdir(temp_images)
 
-    if os.path.exists(sport_data):
-        shutil.rmtree(sport_data)
-    
     if os.path.exists(user_commands):
         os.remove(user_commands)
     dropbox.download_file(None, '/user_commands.json')
 
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='Sport BetFair API'))
-    # await log_markets_data()
+    upload_user_commands.start()
+    print('{0} - Discord Bot on_ready()'.format(datetime.utcnow()))
 
 
 yag = yagmail.SMTP(user=google_credentials['email'], password=google_credentials['password'])

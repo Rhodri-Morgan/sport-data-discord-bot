@@ -23,9 +23,8 @@ class DropBoxAPI:
             return False
     
 
-    def upload(self, file_path, dropbox_path):
+    def upload_file(self, file_path, dropbox_path):
         ''' Deletes existing path and uploads file to dropbox '''
-        print(dropbox_path)
         if self.check_path_exists(dropbox_path):
             self.dropbox.files_delete(dropbox_path)
 
