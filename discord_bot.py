@@ -64,6 +64,7 @@ async def commands(ctx):
 
 @bot.command()
 async def my_data(ctx):
+    ''' Command for user to view their stored data '''
     print('{0} - {1} - my_data()'.format(datetime.utcnow(), ctx.author))
 
     command_data = await get_user_command(ctx.author.id)
@@ -82,6 +83,7 @@ async def my_data(ctx):
 
 @bot.command()
 async def delete_data(ctx):
+    ''' Command for user to delete their stored data '''
     print('{0} - {1} - delete_data()'.format(datetime.utcnow(), ctx.author))
 
     command_data = await get_user_command(ctx.author.id)
@@ -138,7 +140,8 @@ async def contact(ctx):
         return
     
     current_datetime = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
-    yag.send(to=google_credentials['email'], subject='Query ' + current_datetime + ' ' + ctx.author.id, contents=[response.content])
+    user = str(ctx.author) + '/' + str(ctx.author.id)
+    yag.send(to=google_credentials['email'], subject='Query ' + current_datetime + ' ' + user, contents=[user, response.content])
     await ctx.author.send('`Your query been sent to the author.`')
 
 
@@ -161,7 +164,8 @@ async def bug(ctx):
         return
     
     current_datetime = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
-    yag.send(to=google_credentials['email'], subject='Bug Report ' + current_datetime + ' ' + ctx.author.id, contents=[response.content])
+    user = str(ctx.author) + '/' + str(ctx.author.id)
+    yag.send(to=google_credentials['email'], subject='Bug Report ' + current_datetime + ' ' + user, contents=[user,response.content])
     await ctx.author.send('`Thank you for your report. It has been sent to the author.`')
 
 
@@ -187,13 +191,13 @@ async def message_length_check(user, original_str, appended_str):
 async def save_graph(plt):
     ''' Saves graph image to temporary location '''
     global images_cnt
-    plt.savefig(os.path.join(temp_images, 'image{0}.png'.format(images_cnt)), facecolor="#36393f")
+    plt.savefig(os.path.join(temp_images, 'image{0}.png'.format(images_cnt)), facecolor='#36393f')
     images_cnt += 1
     return os.path.join(temp_images, 'image{0}.png'.format(images_cnt-1))
 
 
 async def save_user_command(user_id, sport, event_name, market_name, market_id):
-    ''' Saves user's last command '''
+    ''' Saves users last command '''
     appended_data = {user_id : {'sport':sport, 'event_name':event_name, 'market_name':market_name, 'market_id':market_id}}
     with open(user_commands) as f:
         existing_data = json.load(f)
@@ -203,7 +207,7 @@ async def save_user_command(user_id, sport, event_name, market_name, market_id):
 
 
 async def delete_user_command(user_id):
-    ''' Saves user's last command '''
+    ''' Deletes users last command data'''
     with open(user_commands) as f:
         data = json.load(f)
     data.pop(str(user_id))
@@ -213,7 +217,7 @@ async def delete_user_command(user_id):
 
 
 async def get_user_command(user_id):
-    ''' Gets stored user's last command '''
+    ''' Gets stored users last command '''
     with open(user_commands) as f:
         data = json.load(f)
         if str(user_id) not in data.keys():
