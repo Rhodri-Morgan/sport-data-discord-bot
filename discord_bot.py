@@ -233,7 +233,7 @@ async def menu_selection(user, options):
 
     while True:
         try:
-            response = await bot.wait_for('message', timeout=60.0, check=check)
+            response = await bot.wait_for('message', timeout=10.0, check=check)
         except asyncio.TimeoutError:
             await user.send('`Error data request has timed out. Please try again.`')
             return None
@@ -392,7 +392,9 @@ async def sport(ctx):
     '''' Process user designated sport request '''
     print('{0} - {1} - sport()'.format(datetime.utcnow(), ctx.author))
     if ctx.channel.type == ChannelType.private:
-        await process_sport(ctx, await user_select_sport(ctx.author, betfair.get_event_types()))
+        sport = await user_select_sport(ctx.author, betfair.get_event_types())
+        if sport != None:
+            await process_sport(ctx, sport)
 
 
 @bot.command()
