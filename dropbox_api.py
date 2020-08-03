@@ -52,13 +52,3 @@ class DropBoxAPI:
                 json.dump(empty, f)
        
         return file_path
-
-
-'''
-Dropbox layout
-├── user_commands.json
-├── EVENT_NAME
-    ├── MARKET_NAME.JSON
-    └── ...
-├── ...
-'''

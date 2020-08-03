@@ -27,6 +27,7 @@ class GraphProducer:
 
 
     def preprocess_data(self, probabilities_dict):
+        ''' Prepares data for displaying in chart (combining values and ordering) '''
         max_key = None
         removed_keys = []
         cumulative_values = 0.0
@@ -46,6 +47,7 @@ class GraphProducer:
 
 
     def barplot(self, event_name, market_name, datetime, probabilities_dict):
+        ''' Displays data in barchart form returning reference to chart'''
         max_key, probabilities_dict = self.preprocess_data(probabilities_dict)
 
         barplot_colours = []
@@ -95,6 +97,7 @@ class GraphProducer:
 
     
     def piechart(self, event_name, market_name, datetime, probabilities_dict):
+        ''' Displays data in piechart form returning reference to chart'''
         max_key, probabilities_dict = self.preprocess_data(probabilities_dict)
         if sum(probabilities_dict.values()) < 90:
             return None

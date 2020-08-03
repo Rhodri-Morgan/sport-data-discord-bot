@@ -36,6 +36,8 @@ images_cnt = 0
 @bot.command()
 async def commands(ctx):
     ''' Lists available commands '''
+    print('{0} - {1} - commands()'.format(datetime.utcnow(), ctx.author))
+
     if ctx.channel.type != ChannelType.private:
         return
 
@@ -60,6 +62,8 @@ async def commands(ctx):
 @bot.command()
 async def bug(ctx):
     ''' Sends email to dedicated email address for managing bugs '''
+    print('{0} - {1} - bug()'.format(datetime.utcnow(), ctx.author))
+
     if not ctx.channel.type == ChannelType.private:
         return
 
@@ -81,6 +85,8 @@ async def bug(ctx):
 @bot.command()
 async def clear(ctx):
     ''' Clears all messages made by the bot (user will need to manually delete their own messages) '''
+    print('{0} - {1} - clear()'.format(datetime.utcnow(), ctx.author))
+
     async for message in ctx.author.history(limit=None):
         if message.author.id == bot.user.id:
             await message.delete()
@@ -268,6 +274,8 @@ async def process_sport(ctx, sport):
 @bot.command()
 async def refresh(ctx):
     ''' Refreshes last data request command with output of live data '''
+    print('{0} - {1} - refresh()'.format(datetime.utcnow(), ctx.author))
+
     command_data = await get_user_command(ctx.author)
 
     if command_data is None or not ctx.channel.type == ChannelType.private:
@@ -283,6 +291,7 @@ async def refresh(ctx):
 @bot.command()
 async def sport(ctx):
     '''' Process user designated sport request '''
+    print('{0} - {1} - sport()'.format(datetime.utcnow(), ctx.author))
     if ctx.channel.type == ChannelType.private:
         await process_sport(ctx, await user_select_sport(ctx.author, betfair.get_event_types()))
 
@@ -290,24 +299,28 @@ async def sport(ctx):
 @bot.command()
 async def motorsport(ctx):
     ''' Process Motor Sport request '''
+    print('{0} - {1} - motorsport()'.format(datetime.utcnow(), ctx.author))
     await process_sport(ctx, 'Motor Sport')
 
 
 @bot.command()
 async def rugby(ctx):
     ''' Process Rugby Union request '''
+    print('{0} - {1} - rugby()'.format(datetime.utcnow(), ctx.author))
     await process_sport(ctx, 'Rugby Union')
 
 
 @bot.command()
 async def football(ctx):
-    ''' Process Motor Sport request '''
+    ''' Process Soccer request '''
+    print('{0} - {1} - football()'.format(datetime.utcnow(), ctx.author))
     await process_sport(ctx, 'Soccer')
 
 
 @loop(minutes=1)
 async def upload_user_commands():
     ''' Upload user_commands to dropbox '''
+    print('{0} - upload_user_commands()'.format(datetime.utcnow(), ctx.author))
     dropbox.upload_file(user_commands, '/user_commands.json')
 
 
