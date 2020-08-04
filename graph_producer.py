@@ -108,6 +108,6 @@ class GraphProducer:
         explode = [0.0 for x in probabilities_dict.values()]
         explode[0] = 0.1
         plt.pie(probabilities_dict.values(), labels=probabilities_dict.keys(), shadow=True, explode=explode, 
-                autopct='%1.1f%%', textprops={'fontproperties': self.medium_font, 'color': 'white'})
+                textprops={'fontproperties': self.medium_font, 'color': 'white'})
         plt.title('{0}\n{1}'.format(event_name, market_name), color='white', fontproperties=self.large_font)
         return plt
