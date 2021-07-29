@@ -8,7 +8,6 @@ import time
 from datetime import datetime, timedelta
 
 import discord
-import yagmail
 from discord.enums import ChannelType
 from discord.ext import commands
 from discord.ext.tasks import loop
@@ -43,8 +42,6 @@ async def commands(ctx):
 
     commands = 'Use ! to begin a command.\nCommands must all be in lowercase.\nYou can type \'exit\' to end a query.\n\n' + \
                '!commands - Displays a list of available commands for the bot.\n' + \
-               '!contact - Form for contacting the creator of the bot with any questions or queries.\n'+ \
-               '!bug - Reporting bugs to the bot creator for diagnosis.\n'+ \
                '!clear - Deletes all bot generated messages (not users messages).\n\n'+ \
                '!my_data - Display data for user that is stored (via Dropbox) and utilised.\n'+ \
                '!delete_data - Delete stored user data.\n\n'+ \
@@ -119,54 +116,6 @@ async def delete_data(ctx):
             else:
                 await user.send('`Error please make another selection or type \'exit\'.`')
                 break
-
-
-@bot.command()
-async def contact(ctx):
-    ''' Sends email to dedicated email address for managing request/queries '''
-    print('{0} - {1} - contact()'.format(datetime.utcnow(), ctx.author))
-
-    if not ctx.channel.type == ChannelType.private:
-        return
-
-    await ctx.author.send('`Please enter message below (if attaching images please use mediator such as imgur). This form will timeout in 60 seconds.`')
-
-    def check(message):
-        return message.author == ctx.author and message.channel.type == ChannelType.private
-    try:
-        response = await bot.wait_for('message', timeout=120.0, check=check)
-    except asyncio.TimeoutError:
-        await ctx.author.send('`Error contact form has timed out. Please try again.`')
-        return
-    
-    current_datetime = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
-    user = str(ctx.author) + '/' + str(ctx.author.id)
-    yag.send(to=google_credentials['email'], subject='Query ' + current_datetime + ' ' + user, contents=[user, response.content])
-    await ctx.author.send('`Your query been sent to the author.`')
-
-
-@bot.command()
-async def bug(ctx):
-    ''' Sends email to dedicated email address for managing bugs '''
-    print('{0} - {1} - bug()'.format(datetime.utcnow(), ctx.author))
-
-    if not ctx.channel.type == ChannelType.private:
-        return
-
-    await ctx.author.send('`Please enter bug details below (if attaching images please use mediator such as imgur). This report will timeout in 60 seconds.`')
-
-    def check(message):
-        return message.author == ctx.author and message.channel.type == ChannelType.private
-    try:
-        response = await bot.wait_for('message', timeout=120.0, check=check)
-    except asyncio.TimeoutError:
-        await ctx.author.send('`Error bug report has timed out. Please try again.`')
-        return
-    
-    current_datetime = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
-    user = str(ctx.author) + '/' + str(ctx.author.id)
-    yag.send(to=google_credentials['email'], subject='Bug Report ' + current_datetime + ' ' + user, contents=[user,response.content])
-    await ctx.author.send('`Thank you for your report. It has been sent to the author.`')
 
 
 @bot.command()
@@ -441,5 +390,4 @@ async def on_ready():
     print('{0} - Discord Bot on_ready()'.format(datetime.utcnow()))
 
 
-yag = yagmail.SMTP(user=google_credentials['email'], password=google_credentials['password'])
 bot.run(discord_credentials['token'])
