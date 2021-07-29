@@ -41,7 +41,7 @@ async def commands(ctx):
     if ctx.channel.type != ChannelType.private:
         return
 
-    commands = 'Use ! to begin a command. Commands must all be in lowercase.\n' + \
+    commands = 'Use ! to begin a command. Commands must all be in lowercase. You can type \'exit\' to end a query.\n' + \
                '!commands - Displays a list of available commands for the bot.\n' + \
                '!contact - Form for contacting the creator of the bot with any questions or queries.\n'+ \
                '!bug - Reporting bugs to the bot creator for diagnosis.\n'+ \
@@ -134,7 +134,7 @@ async def contact(ctx):
     def check(message):
         return message.author == ctx.author and message.channel.type == ChannelType.private
     try:
-        response = await bot.wait_for('message', timeout=60.0, check=check)
+        response = await bot.wait_for('message', timeout=120.0, check=check)
     except asyncio.TimeoutError:
         await ctx.author.send('`Error contact form has timed out. Please try again.`')
         return
@@ -158,7 +158,7 @@ async def bug(ctx):
     def check(message):
         return message.author == ctx.author and message.channel.type == ChannelType.private
     try:
-        response = await bot.wait_for('message', timeout=60.0, check=check)
+        response = await bot.wait_for('message', timeout=120.0, check=check)
     except asyncio.TimeoutError:
         await ctx.author.send('`Error bug report has timed out. Please try again.`')
         return
@@ -233,7 +233,7 @@ async def menu_selection(user, options):
 
     while True:
         try:
-            response = await bot.wait_for('message', timeout=10.0, check=check)
+            response = await bot.wait_for('message', timeout=120.0, check=check)
         except asyncio.TimeoutError:
             await user.send('`Error data request has timed out. Please try again.`')
             return None
