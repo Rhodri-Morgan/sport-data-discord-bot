@@ -41,7 +41,7 @@ async def commands(ctx):
     if ctx.channel.type != ChannelType.private:
         return
 
-    commands = 'Use ! to begin a command. Commands must all be in lowercase. You can type \'exit\' to end a query.\n' + \
+    commands = 'Use ! to begin a command.\nCommands must all be in lowercase.\nYou can type \'exit\' to end a query.\n\n' + \
                '!commands - Displays a list of available commands for the bot.\n' + \
                '!contact - Form for contacting the creator of the bot with any questions or queries.\n'+ \
                '!bug - Reporting bugs to the bot creator for diagnosis.\n'+ \
