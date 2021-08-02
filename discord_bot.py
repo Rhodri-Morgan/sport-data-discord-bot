@@ -112,7 +112,7 @@ async def delete_data(ctx):
                 await ctx.author.send('`{0}/{1} data has not been deleted.`'.format(ctx.author.name, ctx.author.id))
                 break
             else:
-                await user.send('`Error please make another selection or type \'exit\'.`')
+                await ctx.author.send('`Error please make another selection or type \'exit\'.`')
                 break
 
 
