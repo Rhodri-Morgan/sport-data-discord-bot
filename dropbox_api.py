@@ -6,11 +6,9 @@ import json
 
 
 class DropBoxAPI:
-    def __init__(self):
-        with open(os.path.join(os.getcwd(), 'credentials.json')) as f:
-            self.credentials = json.loads(f.read())['dropbox']
-
-        self.dropbox = dropbox.Dropbox(self.credentials['access_token'])
+    def __init__(self, user_commands, certifications):
+        self.dropbox = dropbox.Dropbox(os.environ.get('dropbox_token'))
+        download_required(user_commands, certifications)
 
 
     def check_path_exists(self, dropbox_path):
@@ -52,3 +50,18 @@ class DropBoxAPI:
                 json.dump(empty, f)
        
         return file_path
+
+
+    def download_required(self, user_commands, certifications):
+        ''' Downloads the required files for the bot to function correctly '''
+        if os.path.exists(user_commands):
+            os.remove(user_commands)
+        self.download_file(None, '/user_commands.json')
+
+        if os.path.exists(certifications):
+            shutil.rmtree(certifications)
+        os.mkdir(certifications)
+        self.download_file(None, '/client-2048.crt')
+        self.download_file(None, '/client-2048.key')
+        shutil.move(os.path.join(os.getcwd(), 'client-2048.crt'), os.path.join(certifications, 'client-2048.crt'))
+        shutil.move(os.path.join(os.getcwd(), 'client-2048.key'), os.path.join(certifications, 'client-2048.key'))

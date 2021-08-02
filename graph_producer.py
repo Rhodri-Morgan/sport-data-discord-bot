@@ -5,8 +5,6 @@ import numpy as np
 import math
 import os
 
-import json
-
 
 class GraphProducer:
     def __init__(self):

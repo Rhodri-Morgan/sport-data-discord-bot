@@ -7,16 +7,11 @@ from betfairlightweight import filters
 
 
 class BetFairAPI:
-    def __init__(self):
-        certifications = os.path.join(os.getcwd(), 'certifications')
-
-        with open(os.path.join(os.getcwd(), 'credentials.json')) as f:
-            credentials = json.loads(f.read())['betfair']
-
-        self.trading = betfairlightweight.APIClient(username=credentials['username'],
-                                                password=credentials['password'],
-                                                app_key=credentials['live_app_key'],
-                                                certs=certifications)
+    def __init__(self, certifications):
+        self.trading = betfairlightweight.APIClient(username=os.environ.get('betfair_username'),
+                                                    password=os.environ.get('betfair_password'),
+                                                    app_key=os.environ.get('betfair_live_app_key'),
+                                                    certs=certifications)
         self.trading.login()
 
 

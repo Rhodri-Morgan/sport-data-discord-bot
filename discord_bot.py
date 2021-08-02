@@ -18,17 +18,15 @@ import graph_producer
 
 
 bot = commands.Bot(command_prefix='!')
-betfair = betfair_api.BetFairAPI()
-graph = graph_producer.GraphProducer()
-dropbox = dropbox_api.DropBoxAPI()
-
-with open(os.path.join(os.getcwd(), 'credentials.json')) as f:
-    credentials = json.loads(f.read())
-    google_credentials = credentials['google']
-    discord_credentials = credentials['discord']
 
 user_commands = os.path.join(os.getcwd(), 'user_commands.json')
+certifications = os.path.join(os.getcwd(), 'certifications')
 temp_images = os.path.join(os.getcwd(), 'temp_images')
+
+dropbox = dropbox_api.DropBoxAPI(user_commands, certifications)
+betfair = betfair_api.BetFairAPI(certifications)
+graph = graph_producer.GraphProducer()
+
 images_cnt = 0
 
 
@@ -376,18 +374,14 @@ async def upload_user_commands():
 
 @bot.event
 async def on_ready():
-    '''Cleans file base and spools up services/background tasks for discord bot'''    
-    if os.path.exists(temp_images):
-        shutil.rmtree(temp_images)
-    os.mkdir(temp_images)
-
-    if os.path.exists(user_commands):
-        os.remove(user_commands)
-    dropbox.download_file(None, '/user_commands.json')
-
+    '''Spools up services/background tasks for discord bot'''    
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='Sport BetFair API'))
     upload_user_commands.start()
     print('{0} - Discord Bot on_ready()'.format(datetime.utcnow()))
 
 
-bot.run(discord_credentials['token'])
+if os.path.exists(temp_images):
+    shutil.rmtree(temp_images)
+os.mkdir(temp_images)
+
+bot.run(os.environ.get('discord_token'))
