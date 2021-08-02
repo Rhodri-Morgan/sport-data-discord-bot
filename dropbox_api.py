@@ -8,7 +8,7 @@ import json
 class DropBoxAPI:
     def __init__(self, user_commands, certifications):
         self.dropbox = dropbox.Dropbox(os.environ.get('dropbox_token'))
-        download_required(user_commands, certifications)
+        self.download_required(user_commands, certifications)
 
 
     def check_path_exists(self, dropbox_path):
