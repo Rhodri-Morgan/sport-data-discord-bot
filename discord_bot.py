@@ -113,7 +113,6 @@ async def delete_data(ctx):
                 break
             else:
                 await ctx.author.send('`Error please make another selection or type \'exit\'.`')
-                break
 
 
 @bot.command()
