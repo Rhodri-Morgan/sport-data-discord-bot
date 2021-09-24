@@ -32,7 +32,7 @@ images_cnt = 0
 
 @bot.command()
 async def commands(ctx):
-    ''' Lists available commands '''
+    """ Lists available commands """
     print('{0} - {1} - commands()'.format(datetime.utcnow(), ctx.author))
 
     if ctx.channel.type != ChannelType.private:
@@ -48,7 +48,7 @@ async def commands(ctx):
                '!rugby - Menu for navigating rugby union events.\n'+ \
                '!football - Menu for navigating football events.\n'+ \
                '!refresh - Reruns last data request command to retrieve most recent data utilising originally selected criteria (sport, event, market).'
-            
+
     async for message in ctx.author.history(limit=None):
         if message.pinned:
             await message.delete()
@@ -59,7 +59,7 @@ async def commands(ctx):
 
 @bot.command()
 async def my_data(ctx):
-    ''' Command for user to view their stored data '''
+    """ Command for user to view their stored data """
     print('{0} - {1} - my_data()'.format(datetime.utcnow(), ctx.author))
 
     command_data = await get_user_command(ctx.author.id)
@@ -78,7 +78,7 @@ async def my_data(ctx):
 
 @bot.command()
 async def delete_data(ctx):
-    ''' Command for user to delete their stored data '''
+    """ Command for user to delete their stored data """
     print('{0} - {1} - delete_data()'.format(datetime.utcnow(), ctx.author))
 
     command_data = await get_user_command(ctx.author.id)
@@ -103,7 +103,7 @@ async def delete_data(ctx):
             except asyncio.TimeoutError:
                 await ctx.author.send('`Error deletion request has timed out. Please try again.`')
                 return None
-            
+
             if response.content.strip().lower() == 'y':
                 await delete_user_command(ctx.author.id)
                 await ctx.author.send('`{0}/{1} data has been deleted. Please note if you use this bot again in the future it will start logging data.`'.format(ctx.author.name, ctx.author.id))
@@ -117,7 +117,7 @@ async def delete_data(ctx):
 
 @bot.command()
 async def clear(ctx):
-    ''' Clears all messages made by the bot (user will need to manually delete their own messages) '''
+    """ Clears all messages made by the bot (user will need to manually delete their own messages) """
     print('{0} - {1} - clear()'.format(datetime.utcnow(), ctx.author))
 
     async for message in ctx.author.history(limit=None):
@@ -126,7 +126,7 @@ async def clear(ctx):
 
 
 async def message_length_check(user, original_str, appended_str):
-    ''' Helper to ensure messages to discord are not over the 2000 character limit '''
+    """ Helper to ensure messages to discord are not over the 2000 character limit """
     if len(original_str) + len(appended_str) + len('``````') >= 2000:
         await user.send('```{0}```'.format(original_str))
         return appended_str
@@ -135,7 +135,7 @@ async def message_length_check(user, original_str, appended_str):
 
 
 async def save_graph(plt):
-    ''' Saves graph image to temporary location '''
+    """ Saves graph image to temporary location """
     global images_cnt
     plt.savefig(os.path.join(temp_images, 'image{0}.png'.format(images_cnt)), facecolor='#36393f')
     images_cnt += 1
@@ -143,7 +143,7 @@ async def save_graph(plt):
 
 
 async def save_user_command(user_id, sport, event_name, market_name, market_id):
-    ''' Saves users last command '''
+    """ Saves users last command """
     appended_data = {user_id : {'sport':sport, 'event_name':event_name, 'market_name':market_name, 'market_id':market_id}}
     with open(user_commands) as f:
         existing_data = json.load(f)
@@ -153,7 +153,7 @@ async def save_user_command(user_id, sport, event_name, market_name, market_id):
 
 
 async def delete_user_command(user_id):
-    ''' Deletes users last command data'''
+    """ Deletes users last command data """
     with open(user_commands) as f:
         data = json.load(f)
     data.pop(str(user_id))
@@ -173,7 +173,7 @@ async def get_user_command(user_id):
 
 
 async def menu_selection(user, options):
-    ''' Loop for user to enter menu selection ''' 
+    """ Loop for user to enter menu selection """
     def check(message):
         return message.author == user and message.channel.type == ChannelType.private
 
@@ -193,7 +193,7 @@ async def menu_selection(user, options):
 
 
 async def user_select_sport(user, sports):
-    ''' Allows user to select option from a list of available sports '''
+    """ Allows user to select option from a list of available sports """
     if len(sports) == 0:
         await user.send('`Currently there are no open sports with open events.`')
         return None
@@ -202,7 +202,7 @@ async def user_select_sport(user, sports):
     for cnt, sport in enumerate(sports, start=1):
         temp_sports_str = '{0} - {1}\n'.format(str(cnt), sport.event_type.name.strip())
         sports_str = await message_length_check(user, sports_str, temp_sports_str)
-    
+
     sports_str = await message_length_check(user, sports_str, '\nPlease enter an option below.')
     if len(sports_str) != 0:
         await user.send('```{0}```'.format(sports_str))
@@ -216,7 +216,7 @@ async def user_select_sport(user, sports):
 
 
 async def user_select_event(user, sport, events):
-    ''' Allows user to select option from a list of available events for a sport '''
+    """ Allows user to select option from a list of available events for a sport """
     if len(events) == 0:
         await user.send('`Currently there are no open {0} events.`'.format(sport))
         return None
@@ -225,7 +225,7 @@ async def user_select_event(user, sport, events):
     for cnt, event in enumerate(events, start=1):
         temp_events_str = '{0} - {1}\n'.format(str(cnt), event.event.name.strip())
         events_str = await message_length_check(user, events_str, temp_events_str)
-    
+
     events_str = await message_length_check(user, events_str, '\nPlease enter an option below.')
     if len(events_str) != 0:
         await user.send('```{0}```'.format(events_str))
@@ -239,7 +239,7 @@ async def user_select_event(user, sport, events):
 
 
 async def user_select_market(user, event, markets):
-    ''' Allows user to select option from a list of available markets for an event '''
+    """ Allows user to select option from a list of available markets for an event """
     if len(markets) == 0:
         await user.send('`Currently there are no open markets for {0}.`'.format(event.name))
         return
@@ -248,7 +248,7 @@ async def user_select_market(user, event, markets):
     for cnt, market in enumerate(markets, start=1):
         temp_event_str = '{0} - {1}\n'.format(str(cnt), market.market_name.strip())
         event_str = await message_length_check(user, event_str, temp_event_str)
-    
+
     event_str = await message_length_check(user, event_str, '\nPlease enter an option below.')
     if len(event_str) != 0:
         await user.send('```{0}```'.format(event_str))
@@ -262,14 +262,14 @@ async def user_select_market(user, event, markets):
 
 
 async def display_data(user, sport, probabilities_dict, event_name, market_name):
-    ''' Displays data as precentages for event and market '''
+    """ Displays data as precentages for event and market """
     if all(math.isnan(value) for value in probabilities_dict.values()):
         await user.send('`Currently there is no valid data for {0} - {1}.`'.format(event_name, market_name))
         return
 
     current_datetime = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
-    probabilities_str = 'Event - {0}\nMarket - {1}\nProcessed Datetime(UTC) - {2}\nRequested User - {3}\n\n'.format(event_name, 
-                                                                                                                    market_name, 
+    probabilities_str = 'Event - {0}\nMarket - {1}\nProcessed Datetime(UTC) - {2}\nRequested User - {3}\n\n'.format(event_name,
+                                                                                                                    market_name,
                                                                                                                     current_datetime,
                                                                                                                     user.display_name)
     for key, value in probabilities_dict.items():
@@ -287,12 +287,12 @@ async def display_data(user, sport, probabilities_dict, event_name, market_name)
         display_images.append(discord.File(await save_graph(barplot)))
     if piechart is not None:
         display_images.append(discord.File(await save_graph(piechart)))
-    
+
     await user.send(probabilities_str, files=display_images)
 
 
 async def process_sport(ctx, sport):
-    ''' Provides functionality to select and view data breakdown for an event market '''
+    """ Provides functionality to select and view data breakdown for an event market """
     if not ctx.channel.type == ChannelType.private:
         return
 
@@ -306,9 +306,9 @@ async def process_sport(ctx, sport):
         event_market = await user_select_market(ctx.author, event.event, event_markets)
         if event_market is None:
             return
-        
+
         market_book = betfair.get_market_book(event_market.market_id)
-        market_runners_names = betfair.get_runners_names(event_market.market_id)        
+        market_runners_names = betfair.get_runners_names(event_market.market_id)
         probabilities_dict = betfair.calculate_runners_probability(market_book.runners, market_runners_names)
         await display_data(ctx.author, sport, probabilities_dict, event.event.name, event_market.market_name)
         await save_user_command(ctx.author.id, sport, event.event.name, event_market.market_name, event_market.market_id)
@@ -316,7 +316,7 @@ async def process_sport(ctx, sport):
 
 @bot.command()
 async def refresh(ctx):
-    ''' Refreshes last data request command with output of live data '''
+    """ Refreshes last data request command with output of live data """
     print('{0} - {1} - refresh()'.format(datetime.utcnow(), ctx.author))
 
     command_data = await get_user_command(ctx.author.id)
@@ -326,7 +326,7 @@ async def refresh(ctx):
     elif command_data is None:
         await ctx.author.send('`You have not made a valid data request yet.`')
 
-    async with ctx.typing(): 
+    async with ctx.typing():
         market_book = betfair.get_market_book(command_data['market_id'])
         market_runners_names = betfair.get_runners_names(command_data['market_id'])
         probabilities_dict = betfair.calculate_runners_probability(market_book.runners, market_runners_names)
@@ -335,7 +335,7 @@ async def refresh(ctx):
 
 @bot.command()
 async def sport(ctx):
-    '''' Process user designated sport request '''
+    """ Process user designated sport request """
     print('{0} - {1} - sport()'.format(datetime.utcnow(), ctx.author))
     if ctx.channel.type == ChannelType.private:
         sport = await user_select_sport(ctx.author, betfair.get_event_types())
@@ -345,35 +345,35 @@ async def sport(ctx):
 
 @bot.command()
 async def motorsport(ctx):
-    ''' Process Motor Sport request '''
+    """ Process Motor Sport request """
     print('{0} - {1} - motorsport()'.format(datetime.utcnow(), ctx.author))
     await process_sport(ctx, 'Motor Sport')
 
 
 @bot.command()
 async def rugby(ctx):
-    ''' Process Rugby Union request '''
+    """ Process Rugby Union request """
     print('{0} - {1} - rugby()'.format(datetime.utcnow(), ctx.author))
     await process_sport(ctx, 'Rugby Union')
 
 
 @bot.command()
 async def football(ctx):
-    ''' Process Soccer request '''
+    """ Process Soccer request """
     print('{0} - {1} - football()'.format(datetime.utcnow(), ctx.author))
     await process_sport(ctx, 'Soccer')
 
 
 @loop(minutes=5)
 async def upload_user_commands():
-    ''' Upload user_commands to dropbox '''
+    """ Upload user_commands to dropbox """
     print('{0} - upload_user_commands()'.format(datetime.utcnow()))
     dropbox.upload_file(user_commands, '/user_commands.json')
 
 
 @bot.event
 async def on_ready():
-    '''Spools up services/background tasks for discord bot'''    
+    """ Spools up services/background tasks for discord bot """
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='Sport BetFair API'))
     upload_user_commands.start()
     print('{0} - Discord Bot on_ready()'.format(datetime.utcnow()))

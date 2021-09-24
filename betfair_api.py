@@ -16,12 +16,12 @@ class BetFairAPI:
 
 
     def get_event_types(self):
-        ''' Returns event types hosted by BetFair ''' 
+        ''' Returns event types hosted by BetFair '''
         return self.trading.betting.list_event_types()
 
 
     def get_events(self, sport):
-        ''' Returns event_result objects for a sport  '''
+        """ Returns event_result objects for a sport  """
         sport_filter = betfairlightweight.filters.market_filter(text_query=sport)
         sport_event_type_id = self.trading.betting.list_event_types(filter=sport_filter)[0].event_type.id
         sport_event_filter = betfairlightweight.filters.market_filter(event_type_ids=[sport_event_type_id])
@@ -29,10 +29,10 @@ class BetFairAPI:
 
 
     def get_event_markets(self, event_id):
-        ''' Returns list of market_catalogues for a given event id '''
+        """ Returns list of market_catalogues for a given event id """
         market_catalogue_filter = betfairlightweight.filters.market_filter(event_ids=[event_id])
-        return self.trading.betting.list_market_catalogue(filter=market_catalogue_filter, 
-                                                          max_results='1000', 
+        return self.trading.betting.list_market_catalogue(filter=market_catalogue_filter,
+                                                          max_results='1000',
                                                           sort='FIRST_TO_START')
 
 
@@ -42,7 +42,7 @@ class BetFairAPI:
 
 
     def calculate_runners_probability(self, runners, runners_names):
-        ''' Returns dictionary of key=runner_name and value=probability for runners in a market_book'''
+        """ Returns dictionary of key=runner_name and value=probability for runners in a market_book """
         probability_dict = {}
         for runner in runners:
             name = runners_names[runner.selection_id]
@@ -51,14 +51,14 @@ class BetFairAPI:
             if last_price_traded is not None:
                 probability_dict[name] = round(((1/last_price_traded) * 100), 2)
 
-        return {k: v for k, v in sorted(probability_dict.items(), key=lambda item: item[1], reverse=True)} 
-    
-  
+        return {k: v for k, v in sorted(probability_dict.items(), key=lambda item: item[1], reverse=True)}
+
+
     def get_runners_names(self, market_id):
-        ''' Returns dictionary of key=selection_id and value=runner_name for a given market_id '''
+        """ Returns dictionary of key=selection_id and value=runner_name for a given market_id """
         market_catalogue_filter = betfairlightweight.filters.market_filter(market_ids=[market_id])
-        market_catalogue = self.trading.betting.list_market_catalogue(filter=market_catalogue_filter, 
-                                                                      max_results=1, 
+        market_catalogue = self.trading.betting.list_market_catalogue(filter=market_catalogue_filter,
+                                                                      max_results=1,
                                                                       market_projection=['RUNNER_DESCRIPTION', 'RUNNER_METADATA'])[0]
         runners_names = {}
         for runner in market_catalogue.runners:

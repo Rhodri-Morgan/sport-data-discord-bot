@@ -12,17 +12,17 @@ class DropBoxAPI:
 
 
     def check_path_exists(self, dropbox_path):
-        ''' Checks if a file paths exists in dropbox '''
+        """ Checks if a file paths exists in dropbox """
         try:
             metadata = self.dropbox.files_get_metadata(dropbox_path)
             if metadata != None:
                 return True
         except ApiError:
             return False
-    
+
 
     def upload_file(self, file_path, dropbox_path):
-        ''' Deletes existing path and uploads file to dropbox '''
+        """ Deletes existing path and uploads file to dropbox """
         if self.check_path_exists(dropbox_path):
             self.dropbox.files_delete(dropbox_path)
 
@@ -31,7 +31,7 @@ class DropBoxAPI:
 
 
     def download_file(self, local_path, dropbox_path):
-        ''' Downloads specified file from dropbox and returns path (if not present creates empty file) '''
+        """ Downloads specified file from dropbox and returns path (if not present creates empty file) """
         file_path = os.getcwd()
         dropbox_subpaths = dropbox_path.split('/')
         for sub_path in dropbox_subpaths[1:-1:]:
@@ -48,12 +48,12 @@ class DropBoxAPI:
             with open(file_path, 'w') as f:
                 empty = {}
                 json.dump(empty, f)
-       
+
         return file_path
 
 
     def download_required(self, user_commands, certifications):
-        ''' Downloads the required files for the bot to function correctly '''
+        """ Downloads the required files for the bot to function correctly """
         if os.path.exists(user_commands):
             os.remove(user_commands)
         self.download_file(None, '/user_commands.json')
