@@ -16,7 +16,7 @@ class BetFairAPI:
 
 
     def get_event_types(self):
-        ''' Returns event types hosted by BetFair '''
+        """ Returns event types hosted by BetFair """
         return self.trading.betting.list_event_types()
 
 
@@ -37,7 +37,7 @@ class BetFairAPI:
 
 
     def get_market_book(self, market_id):
-        ''' Returns market_book object for a given event_id '''
+        """ Returns market_book object for a given event_id """
         return self.trading.betting.list_market_book(market_ids=[market_id])[0]
 
 

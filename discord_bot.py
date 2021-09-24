@@ -163,7 +163,7 @@ async def delete_user_command(user_id):
 
 
 async def get_user_command(user_id):
-    ''' Gets stored users last command '''
+    """ Gets stored users last command """
     with open(user_commands) as f:
         data = json.load(f)
         if str(user_id) not in data.keys():
