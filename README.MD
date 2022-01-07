@@ -26,4 +26,4 @@ As seen throughout the scripts, keys and secrets are all stored on Heroku in the
 
 ### Discord
 
-You can access and use the bot by visiting [this link]((https://discord.com/api/oauth2/authorize?client_id=877412844398837800&permissions=0&scope=bot)) and adding it to your server. Message it `!commands` in PMs to get usage instructions.
+You can access and use the bot by visiting [this link](https://discord.com/api/oauth2/authorize?client_id=877412844398837800&permissions=0&scope=bot) and adding it to your server. Message it `!commands` in PMs to get usage instructions.
