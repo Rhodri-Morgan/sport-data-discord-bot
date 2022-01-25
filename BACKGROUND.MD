@@ -4,7 +4,7 @@
 
 Sport is an interesting and thrilling experience where anything can happen. Part of the overall appeal of sport is this possibility of change and with that also seeing how others react and judging what they think will happen. The purpose of this Discord bot is to make sporting probability information more easily accessible through Discord for all sport lovers across many different sports from Soccer to Snooker and plenty in between.
 
-https://user-images.githubusercontent.com/52254823/136570641-19a7dc27-f62e-4bea-8941-0a4f324d0976.mp4
+https://user-images.githubusercontent.com/52254823/150962277-5a26d873-2c7b-4518-9f87-6346320a8595.mp4
 
 # Methodologies: 
 
