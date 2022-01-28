@@ -296,7 +296,7 @@ async def process_sport(ctx, sport):
     if not ctx.channel.type == ChannelType.private:
         return
 
-    print('{0} - {1} - request {2}'.format(datetime.utcnow(), ctx.author, sport))
+    print('{0} - {1} - sport() request {2}'.format(datetime.utcnow(), ctx.author, sport))
     async with ctx.typing():
         events = betfair.get_events(sport)
         event = await user_select_event(ctx.author, sport, events)
