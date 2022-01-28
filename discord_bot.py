@@ -296,6 +296,7 @@ async def process_sport(ctx, sport):
     if not ctx.channel.type == ChannelType.private:
         return
 
+    print('{0} - {1} - request {2}'.format(datetime.utcnow(), ctx.author, sport))
     async with ctx.typing():
         events = betfair.get_events(sport)
         event = await user_select_event(ctx.author, sport, events)
@@ -336,7 +337,6 @@ async def refresh(ctx):
 @bot.command()
 async def sport(ctx):
     """ Process user designated sport request """
-    print('{0} - {1} - sport()'.format(datetime.utcnow(), ctx.author))
     if ctx.channel.type == ChannelType.private:
         sport = await user_select_sport(ctx.author, betfair.get_event_types())
         if sport != None:
@@ -346,21 +346,18 @@ async def sport(ctx):
 @bot.command()
 async def motorsport(ctx):
     """ Process Motor Sport request """
-    print('{0} - {1} - motorsport()'.format(datetime.utcnow(), ctx.author))
     await process_sport(ctx, 'Motor Sport')
 
 
 @bot.command()
 async def rugby(ctx):
     """ Process Rugby Union request """
-    print('{0} - {1} - rugby()'.format(datetime.utcnow(), ctx.author))
     await process_sport(ctx, 'Rugby Union')
 
 
 @bot.command()
 async def football(ctx):
     """ Process Soccer request """
-    print('{0} - {1} - football()'.format(datetime.utcnow(), ctx.author))
     await process_sport(ctx, 'Soccer')
 
 
