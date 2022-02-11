@@ -284,9 +284,13 @@ async def display_data(user, sport, probabilities_dict, event_name, market_name)
     barplot = graph.barplot(event_name, market_name, current_datetime, probabilities_dict)
     piechart = graph.piechart(event_name, market_name, current_datetime, probabilities_dict)
     if barplot is not None:
-        display_images.append(discord.File(await save_graph(barplot)))
+        barplot_path = await save_graph(barplot)
+        display_images.append(discord.File(barplot_path))
+        os.remove(barplot_path)
     if piechart is not None:
-        display_images.append(discord.File(await save_graph(piechart)))
+        piechart_path = await save_graph(piechart)
+        display_images.append(discord.File(piechart_path))
+        os.remove(piechart_path)
 
     await user.send(probabilities_str, files=display_images)
 
