@@ -1,1 +1,1 @@
-web: gunicorn --timeout 600 discord_bot:application
+web: gunicorn --timeout 600
