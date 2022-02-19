@@ -22,5 +22,5 @@ s3transfer==0.5.1
 six==1.16.0
 typing_extensions==4.1.1
 urllib3==1.25.11
-websockets==8.1
+websockets==9.1
 yarl==1.5.1
