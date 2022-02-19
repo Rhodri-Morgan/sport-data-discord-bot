@@ -8,7 +8,7 @@
 
 ### Python Version
 
-This project is using `Python 3.6.0`.
+This project is using `Python 3.7.0`.
 
 ### Dependencies
  
@@ -18,11 +18,11 @@ The list of dependencies for this project can be found in `requirements.txt` and
 
 ### Heroku
 
-The project is currently deployed on [Heroku](https://www.heroku.com/) and connected to this repository. Pushing to the `master` branch will automatically cause the bot to refresh with the changes applied.
+The project is currently deployed on [AWS Beanstalk](https://aws.amazon.com/elasticbeanstalk/) and connected to this repository. Pushing to the `master` branch will automatically cause the bot to refresh with the changes applied.
 
-**`procfile` and  `runtime` are essential Heroku files. Do not modify or remove them.**
+**Ensure key and user commands are populated in connected Amazon S3 bucket.**
 
-As seen throughout the scripts, keys and secrets are all stored on Heroku in the environment variables section. 
+As seen throughout the scripts, keys and secrets are all stored as environment variables in config panel. 
 
 ### Discord
 
