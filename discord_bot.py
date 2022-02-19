@@ -13,7 +13,7 @@ from discord.ext import commands
 from discord.ext.tasks import loop
 
 import betfair_api
-import dropbox_api
+import aws_s3
 import graph_producer
 
 
@@ -23,11 +23,12 @@ user_commands = os.path.join(os.getcwd(), 'user_commands.json')
 certifications = os.path.join(os.getcwd(), 'certifications')
 temp_images = os.path.join(os.getcwd(), 'temp_images')
 
-dropbox = dropbox_api.DropBoxAPI(user_commands, certifications)
+aws_s3 = aws_s3.AmazonS3(user_commands, certifications)
 betfair = betfair_api.BetFairAPI(certifications)
 graph = graph_producer.GraphProducer()
 
 images_cnt = 0
+has_user_commands_changed = False
 
 
 @bot.command()
@@ -41,7 +42,7 @@ async def commands(ctx):
     commands = 'Use ! to begin a command.\nCommands must all be in lowercase.\nYou can type \'exit\' to end a query.\n\n' + \
                '!commands - Displays a list of available commands for the bot.\n' + \
                '!clear - Deletes all bot generated messages (not users messages).\n\n'+ \
-               '!my_data - Display data for user that is stored (via Dropbox) and utilised.\n'+ \
+               '!my_data - Display data for user that is stored and utilised.\n'+ \
                '!delete_data - Delete stored user data.\n\n'+ \
                '!sport - Menu for choosing sport and then navigating all events.\n'+ \
                '!motorsport - Menu for navigating motorsport events.\n'+ \
@@ -70,7 +71,7 @@ async def my_data(ctx):
         await ctx.author.send('`{0}/{1} - I currently have no data stored for this account.`'.format(ctx.author.name, ctx.author.id))
     else:
         command_data = {ctx.author.id: command_data}
-        data_str = '{0}/{1} - I am currently storing this data via Dropbox:\n'.format(ctx.author.name, ctx.author.id)
+        data_str = '{0}/{1} - I am currently storing this data:\n'.format(ctx.author.name, ctx.author.id)
         data_str = '```{0}``````{1}```'.format(data_str, json.dumps(command_data, indent=4, sort_keys=True))
         data_str = '{0}```To delete this data please use !delete_data.```'.format(data_str)
         await ctx.author.send(data_str)
@@ -89,7 +90,7 @@ async def delete_data(ctx):
         await ctx.author.send('`{0}/{1} - I currently have no data stored for this account.`'.format(ctx.author.name, ctx.author.id))
     else:
         command_data = {ctx.author.id: command_data}
-        data_str = '{0}/{1} - I am currently storing this data via Dropbox:\n'.format(ctx.author.name, ctx.author.id)
+        data_str = '{0}/{1} - I am currently storing this data:\n'.format(ctx.author.name, ctx.author.id)
         data_str = '```{0}``````{1}```'.format(data_str, json.dumps(command_data, indent=4, sort_keys=True))
         data_str = '{0}```Would you like to delete this data y/n?```'.format(data_str)
         await ctx.author.send(data_str)
@@ -144,12 +145,22 @@ async def save_graph(plt):
 
 async def save_user_command(user_id, sport, event_name, market_name, market_id):
     """ Saves users last command """
+    global has_user_commands_changed
+    new_data = {}
     appended_data = {user_id : {'sport':sport, 'event_name':event_name, 'market_name':market_name, 'market_id':market_id}}
     with open(user_commands) as f:
         existing_data = json.load(f)
-    merged_data = {**existing_data, **appended_data}
-    with open(user_commands, 'w') as f:
-        json.dump(merged_data, f)
+        if user_id in existing_data and existing_data[user_id] != appended_data[user_id]:
+            has_user_commands_changed = True
+            existing_data[user_id] = appended_data[user_id]
+            new_data = existing_data
+        elif user_id not in existing_data:
+            has_user_commands_changed = True
+            new_data = {**existing_data, **appended_data}
+
+        if has_user_commands_changed:
+            with open(user_commands, 'w') as f:
+                json.dump(new_data, f)
 
 
 async def delete_user_command(user_id):
@@ -159,7 +170,7 @@ async def delete_user_command(user_id):
     data.pop(str(user_id))
     with open(user_commands, 'w') as f:
         json.dump(data, f)
-    dropbox.upload_file(user_commands, '/user_commands.json')
+    aws_s3.upload_file(user_commands, 'user_commands.json')
 
 
 async def get_user_command(user_id):
@@ -365,11 +376,14 @@ async def football(ctx):
     await process_sport(ctx, 'Soccer')
 
 
-@loop(minutes=5)
+@loop(minutes=1)
 async def upload_user_commands():
-    """ Upload user_commands to dropbox """
+    """ Upload user_commands """
     print('{0} - upload_user_commands()'.format(datetime.utcnow()))
-    dropbox.upload_file(user_commands, '/user_commands.json')
+    global has_user_commands_changed
+    if has_user_commands_changed:
+        aws_s3.upload_file(user_commands, 'user_commands.json')
+        has_user_commands_changed = False
 
 
 @bot.event
