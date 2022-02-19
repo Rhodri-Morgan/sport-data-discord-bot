@@ -18,7 +18,7 @@ The list of dependencies for this project can be found in `requirements.txt` and
 
 ### Heroku
 
-The project is currently deployed on [AWS Beanstalk](https://aws.amazon.com/elasticbeanstalk/) and connected to this repository. Pushing to the `master` branch will automatically cause the bot to refresh with the changes applied.
+The project is currently deployed on [AWS Elastic Beanstalk](https://aws.amazon.com/elasticbeanstalk/) and connected to this repository. Pushing to the `master` branch will automatically cause the bot to refresh with the changes applied.
 
 **Ensure key and user commands are populated in connected Amazon S3 bucket.**
 
