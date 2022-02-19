@@ -8,9 +8,9 @@ from betfairlightweight import filters
 
 class BetFairAPI:
     def __init__(self, certifications):
-        self.trading = betfairlightweight.APIClient(username=os.environ.get('betfair_username'),
-                                                    password=os.environ.get('betfair_password'),
-                                                    app_key=os.environ.get('betfair_live_app_key'),
+        self.trading = betfairlightweight.APIClient(username=os.environ.get('BETFAIR_USERNAME'),
+                                                    password=os.environ.get('BETFAIR_PASSWORD'),
+                                                    app_key=os.environ.get('BETFAIR_LIVE_APP_KEY'),
                                                     certs=certifications)
         self.trading.login()
 

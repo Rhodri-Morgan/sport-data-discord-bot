@@ -398,4 +398,4 @@ if os.path.exists(temp_images):
     shutil.rmtree(temp_images)
 os.mkdir(temp_images)
 
-bot.run(os.environ.get('discord_token'))
+bot.run(os.environ.get('DISCORD_TOKEN'))

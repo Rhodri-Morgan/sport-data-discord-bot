@@ -6,10 +6,10 @@ import shutil
 class AmazonS3:
     def __init__(self, user_commands, certifications):
         self.s3 = boto3.client('s3',
-                               aws_access_key_id=os.environ.get('aws_access_key_id'),
-                               aws_secret_access_key=os.environ.get('aws_secret_access_key'),
+                               aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
+                               aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY'),
                                region_name='eu-west-2')
-        self.bucket_name = os.environ.get('aws_bucket_name')
+        self.bucket_name = os.environ.get('AWS_BUCKET_NAME')
         self.download_required(user_commands, certifications)
 
 
