@@ -376,7 +376,7 @@ async def football(ctx):
     await process_sport(ctx, 'Soccer')
 
 
-@loop(minutes=1)
+@loop(minutes=5)
 async def upload_user_commands():
     """ Upload user_commands """
     print('{0} - upload_user_commands()'.format(datetime.utcnow()))
