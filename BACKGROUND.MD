@@ -4,7 +4,7 @@
 
 Sport is an interesting and thrilling experience where anything can happen. Part of the overall appeal of sport is this possibility of change and with that also seeing how others react and judging what they think will happen. The purpose of this Discord bot is to make sporting probability information more easily accessible through Discord for all sport lovers across many different sports from Soccer to Snooker and plenty in between.
 
-https://user-images.githubusercontent.com/52254823/150962277-5a26d873-2c7b-4518-9f87-6346320a8595.mp4
+https://user-images.githubusercontent.com/52254823/154824225-89f259a3-effe-4228-9fa2-9b7f02ac786e.mp4
 
 # Methodologies: 
 
@@ -18,4 +18,4 @@ For this bot to function correctly we collect some data from the users such as t
 
 # Status:
 
-Currently the Sport Data Discord Bot is being hosted using the [Heroku](https://www.heroku.com/) service. You can test it out for yourself by adding it to your server through this [invite link](https://discord.com/api/oauth2/authorize?client_id=877412844398837800&permissions=0&scope=bot) and messaging `!commands` to it in PMs.
+Currently the Sport Data Discord Bot is being hosted using the [AWS Elastic Beanstalk](https://aws.amazon.com/elasticbeanstalk/) service. You can test the bot out for yourself by adding it to your server through this [invite link](https://discord.com/api/oauth2/authorize?client_id=877412844398837800&permissions=0&scope=bot) and messaging `!commands` to it in PMs.
