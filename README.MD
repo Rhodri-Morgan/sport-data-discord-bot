@@ -14,16 +14,30 @@ This project is using `Python 3.7.0`.
  
 The list of dependencies for this project can be found in `requirements.txt` and can be installed using `pip install -r requirements.txt`. To build a new `requirements.txt` delete the old version, navigate to directory and run `pip freeze > requirements.txt`.
 
+
+## Known Issues
+
+### Local Permission Error
+
+Running the application locally will throw the error shown below.
+
+![Permission Error](documentation_sources/permission_error.png)
+
+This will not occur when hosted live. It can be ignored. 
+
 ## Running
 
-### Heroku
+### AWS
 
-The project is currently deployed on [AWS Elastic Beanstalk](https://aws.amazon.com/elasticbeanstalk/) and connected to this repository. Pushing to the `master` branch will automatically cause the bot to refresh with the changes applied.
+The project is currently deployed on [AWS Elastic Beanstalk](https://aws.amazon.com/elasticbeanstalk/) and connected to this repository via [CodePipeline](https://aws.amazon.com/codepipeline/). Pushing to the `master` branch will automatically cause the bot to refresh with the changes applied.
 
-**Ensure key and user commands are populated in connected Amazon S3 bucket.**
+**Ensure keys and user commands JSON are populated in connected Amazon S3 bucket.**
+
+**Do not delete `Procfile`.**
 
 As seen throughout the scripts, keys and secrets are all stored as environment variables in config panel. 
 
 ### Discord
 
 You can access and use the bot by visiting [this link](https://discord.com/api/oauth2/authorize?client_id=877412844398837800&permissions=0&scope=bot) and adding it to your server. Message it `!commands` in PMs to get usage instructions.
+
