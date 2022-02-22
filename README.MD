@@ -33,7 +33,7 @@ The project is currently deployed on [AWS Elastic Beanstalk](https://aws.amazon.
 
 **Ensure keys and user commands JSON are populated in connected Amazon S3 bucket.**
 
-**Do not delete `Procfile`.**
+**Do not delete `Procfile` and do not delete `.ebextensions` both are responsible for the running of the program, that is avoiding timeouts and restarting the instance daily (avoiding errors) accordingly.**
 
 As seen throughout the scripts, keys and secrets are all stored as environment variables in config panel. 
 
