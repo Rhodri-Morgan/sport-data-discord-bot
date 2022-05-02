@@ -23,7 +23,7 @@ Running the application locally will throw the error shown below.
 
 ![Permission Error](documentation_sources/permission_error.png)
 
-This will not occur when hosted live. It can be ignored. 
+This will not occur when hosted live. It can be ignored but if you want to run it locally error free then comment out `os.remove(barplot_path)` and `os.remove(piechart_path)`.
 
 ## Running
 
