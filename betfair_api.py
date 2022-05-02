@@ -1,9 +1,6 @@
-import json
-import math
 import os
 
 import betfairlightweight
-from betfairlightweight import filters
 
 
 class BetFairAPI:

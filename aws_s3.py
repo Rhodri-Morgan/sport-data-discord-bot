@@ -14,7 +14,7 @@ class AmazonS3:
 
 
     def download_file(self, aws_filename, output_filename):
-        ''' Downloads file hosted on AWS S3 with same filename '''
+        """ Downloads file hosted on AWS S3 with same filename """
         output_path = os.path.join(os.getcwd(), output_filename)
         if os.path.exists(output_path):
             os.remove(output_path)
@@ -23,7 +23,7 @@ class AmazonS3:
 
 
     def upload_file(self, input_filename, aws_filename):
-        ''' Uploads file to be hosted on AWS S3 '''
+        """ Uploads file to be hosted on AWS S3 """
         self.s3.upload_file(input_filename, self.bucket_name, aws_filename)
 
 

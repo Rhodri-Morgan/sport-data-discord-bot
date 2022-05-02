@@ -4,8 +4,7 @@ import math
 import os
 import re
 import shutil
-import time
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import discord
 from discord.enums import ChannelType
