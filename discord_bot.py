@@ -11,6 +11,7 @@ import discord
 from discord.enums import ChannelType
 from discord.ext import commands
 from discord.ext.tasks import loop
+from numpy import append
 
 import betfair_api
 import aws_s3
@@ -63,7 +64,7 @@ async def my_data(ctx):
     """ Command for user to view their stored data """
     print('{0} - {1} - my_data()'.format(datetime.utcnow(), ctx.author))
 
-    command_data = await get_user_command(ctx.author.id)
+    command_data = await get_user_command(str(ctx.author.id))
 
     if not ctx.channel.type == ChannelType.private:
         return
@@ -82,7 +83,7 @@ async def delete_data(ctx):
     """ Command for user to delete their stored data """
     print('{0} - {1} - delete_data()'.format(datetime.utcnow(), ctx.author))
 
-    command_data = await get_user_command(ctx.author.id)
+    command_data = await get_user_command(str(ctx.author.id))
 
     if not ctx.channel.type == ChannelType.private:
         return
@@ -106,7 +107,7 @@ async def delete_data(ctx):
                 return None
 
             if response.content.strip().lower() == 'y':
-                await delete_user_command(ctx.author.id)
+                await delete_user_command(str(ctx.author.id))
                 await ctx.author.send('`{0}/{1} data has been deleted. Please note if you use this bot again in the future it will start logging data.`'.format(ctx.author.name, ctx.author.id))
                 break
             elif response.content.strip().lower() == 'n' or response.content.strip().lower() == 'exit':
@@ -150,11 +151,18 @@ async def save_user_command(user_id, sport, event_name, market_name, market_id):
     appended_data = {user_id : {'sport':sport, 'event_name':event_name, 'market_name':market_name, 'market_id':market_id}}
     with open(user_commands) as f:
         existing_data = json.load(f)
-        if user_id in existing_data and existing_data[user_id] != appended_data[user_id]:
+
+        user_data_exists = True
+        try:
+            found = existing_data[user_id]
+        except KeyError as e:
+            user_data_exists = False
+
+        if user_data_exists == True and existing_data[user_id] != appended_data[user_id]:
             has_user_commands_changed = True
             existing_data[user_id] = appended_data[user_id]
             new_data = existing_data
-        elif user_id not in existing_data:
+        elif user_data_exists == False:
             has_user_commands_changed = True
             new_data = {**existing_data, **appended_data}
 
@@ -167,7 +175,7 @@ async def delete_user_command(user_id):
     """ Deletes users last command data """
     with open(user_commands) as f:
         data = json.load(f)
-    data.pop(str(user_id))
+    data.pop(user_id)
     with open(user_commands, 'w') as f:
         json.dump(data, f)
     aws_s3.upload_file(user_commands, 'user_commands.json')
@@ -177,10 +185,11 @@ async def get_user_command(user_id):
     """ Gets stored users last command """
     with open(user_commands) as f:
         data = json.load(f)
-        if str(user_id) not in data.keys():
+        try:
+            found = data[user_id]
+            return found
+        except KeyError as e:
             return None
-        else:
-            return data[str(user_id)]
 
 
 async def menu_selection(user, options):
@@ -327,7 +336,7 @@ async def process_sport(ctx, sport):
         market_runners_names = betfair.get_runners_names(event_market.market_id)
         probabilities_dict = betfair.calculate_runners_probability(market_book.runners, market_runners_names)
         await display_data(ctx.author, sport, probabilities_dict, event.event.name, event_market.market_name)
-        await save_user_command(ctx.author.id, sport, event.event.name, event_market.market_name, event_market.market_id)
+        await save_user_command(str(ctx.author.id), sport, event.event.name, event_market.market_name, event_market.market_id)
 
 
 @bot.command()
@@ -335,7 +344,7 @@ async def refresh(ctx):
     """ Refreshes last data request command with output of live data """
     print('{0} - {1} - refresh()'.format(datetime.utcnow(), ctx.author))
 
-    command_data = await get_user_command(ctx.author.id)
+    command_data = await get_user_command(str(ctx.author.id))
 
     if not ctx.channel.type == ChannelType.private:
         return
