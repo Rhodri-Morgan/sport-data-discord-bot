@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from matplotlib import font_manager as fm, rcParams
+from matplotlib import font_manager as fm
 import matplotlib.gridspec as gridspec
 import numpy as np
 import math
