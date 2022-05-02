@@ -11,7 +11,6 @@ import discord
 from discord.enums import ChannelType
 from discord.ext import commands
 from discord.ext.tasks import loop
-from numpy import append
 
 import betfair_api
 import aws_s3
