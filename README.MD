@@ -47,7 +47,3 @@ Pushing to the `master` branch will automatically cause the bot to refresh with 
 **Do not delete `Procfile` and do not delete `.ebextensions` both are responsible for the running of the program, that is avoiding timeouts and restarting the instance daily (avoiding errors) accordingly.**
 
 As seen throughout the scripts, keys and secrets are all stored as environment variables in AWS.
-
-### Discord
-
-You can access and use the bot by visiting [this link](https://discord.com/api/oauth2/authorize?client_id=877412844398837800&permissions=0&scope=bot) and adding it to your server. Message it `!commands` in PMs to get usage instructions.
