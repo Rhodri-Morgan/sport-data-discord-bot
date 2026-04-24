@@ -264,6 +264,8 @@ async def advance_to_event(
 ) -> None:
     """Fetch events for ``sport``, sort by start date, render the event selector."""
     assert bot.betfair is not None
+    if not interaction.response.is_done():
+        await interaction.response.defer()
 
     events = await _run_blocking(bot, lambda: bot.betfair.get_events(sport))  # type: ignore[union-attr]
     events = sorted(events, key=_event_open_date)
@@ -293,6 +295,8 @@ async def advance_to_market(
 ) -> None:
     """Fetch markets for the chosen event and render the market selector."""
     assert bot.betfair is not None
+    if not interaction.response.is_done():
+        await interaction.response.defer()
 
     markets = await _run_blocking(bot, lambda: bot.betfair.get_event_markets(event_result.event.id))  # type: ignore[union-attr]
 
@@ -321,6 +325,8 @@ async def render_market_results(
 ) -> None:
     """Pull market book data, build probability text + charts, send the final message."""
     assert bot.betfair is not None
+    if not interaction.response.is_done():
+        await interaction.response.defer()
 
     market_book = await _run_blocking(bot, lambda: bot.betfair.get_market_book(market.market_id))  # type: ignore[union-attr]
     runners_names = await _run_blocking(bot, lambda: bot.betfair.get_runners_names(market.market_id))  # type: ignore[union-attr]
