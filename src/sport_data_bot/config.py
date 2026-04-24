@@ -19,7 +19,6 @@ class Settings:
     betfair_password: str
     betfair_live_app_key: str
     aws_bucket_name: str
-    aws_region: str
 
     @classmethod
     def from_env(cls) -> Settings:
@@ -34,7 +33,6 @@ class Settings:
             betfair_password=os.environ["BETFAIR_PASSWORD"],
             betfair_live_app_key=os.environ["BETFAIR_LIVE_APP_KEY"],
             aws_bucket_name=os.environ["AWS_BUCKET_NAME"],
-            aws_region=os.environ.get("AWS_REGION", "eu-west-1"),
         )
 
 

@@ -24,8 +24,16 @@ def create_health_app() -> web.Application:
     return app
 
 
+class _HealthCheckFilter(logging.Filter):
+    """Drop aiohttp access-log records for the /health endpoint."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        return "GET /health" not in record.getMessage()
+
+
 async def start_health_server(port: int = HEALTH_PORT) -> web.AppRunner:
     """Start the health-check HTTP server and return its runner."""
+    logging.getLogger("aiohttp.access").addFilter(_HealthCheckFilter())
     app = create_health_app()
     runner = web.AppRunner(app)
     await runner.setup()

@@ -13,9 +13,9 @@ class BetFairAPI:
     def __init__(self, certifications: str) -> None:
         """Create and log in a BetFair trading client using env-var credentials."""
         self.trading = betfairlightweight.APIClient(
-            username=os.environ.get("BETFAIR_USERNAME"),
-            password=os.environ.get("BETFAIR_PASSWORD"),
-            app_key=os.environ.get("BETFAIR_LIVE_APP_KEY"),
+            username=os.environ["BETFAIR_USERNAME"],
+            password=os.environ["BETFAIR_PASSWORD"],
+            app_key=os.environ["BETFAIR_LIVE_APP_KEY"],
             certs=certifications,
         )
         self.trading.login()
@@ -34,7 +34,7 @@ class BetFairAPI:
     def get_event_markets(self, event_id: str) -> list:
         """Return market catalogues for a given event id."""
         market_catalogue_filter = betfairlightweight.filters.market_filter(event_ids=[event_id])
-        return self.trading.betting.list_market_catalogue(filter=market_catalogue_filter, max_results="1000", sort="FIRST_TO_START")
+        return self.trading.betting.list_market_catalogue(filter=market_catalogue_filter, max_results=1000, sort="FIRST_TO_START")
 
     def get_market_book(self, market_id: str):
         """Return the market book object for a given market id."""
@@ -59,5 +59,6 @@ class BetFairAPI:
         )[0]
         runners_names: dict = {}
         for runner in market_catalogue.runners:
-            runners_names[runner.selection_id] = runner.runner_name.strip()
+            if runner.runner_name:
+                runners_names[runner.selection_id] = runner.runner_name.strip()
         return runners_names

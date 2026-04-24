@@ -8,6 +8,7 @@ import shutil
 import boto3
 
 S3_KEY_PREFIX = "sport-data-discord-bot"
+AWS_REGION = "eu-west-1"
 
 
 class AmazonS3:
@@ -20,7 +21,7 @@ class AmazonS3:
         env vars or ``~/.aws`` locally). Cert objects live under the
         ``sport-data-discord-bot/`` prefix inside the configured bucket.
         """
-        self.s3 = boto3.client("s3", region_name=os.environ.get("AWS_REGION", "eu-west-1"))
+        self.s3 = boto3.client("s3", region_name=AWS_REGION)
         self.bucket_name = os.environ["AWS_BUCKET_NAME"]
         self._download_certs(certifications)
 
