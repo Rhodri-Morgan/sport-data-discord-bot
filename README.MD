@@ -2,48 +2,79 @@
 
 ![deployed.png](https://img.shields.io/badge/-Deployed-green)
 
-## About
+A Discord bot that pulls live odds from [BetFair Exchange](https://www.betfair.com.au/exchange/plus/) and DMs you implied probabilities for any sport, event, and market — with a runner-by-runner breakdown, bar and pie charts, and a market-efficiency score. Works across motor sport, rugby union, football, and anything else trading on the Exchange. Stateless: every request is a fresh query.
 
-https://user-images.githubusercontent.com/52254823/216721412-1ab6a379-bef6-4be8-a280-37a2571c72eb.mp4
+## Quick Start (Docker)
 
-### Using bot
+```bash
+direnv allow          # loads secrets from AWS Secrets Manager and writes .env
+make docker-run
+```
 
-The bot is currently deployed and accessible to anyone. You can test the bot out for yourself by adding it to your server through this [invite link](https://discord.com/api/oauth2/authorize?client_id=877412844398837800&permissions=0&scope=bot) and messaging `!commands` to it in PMs.
+## Prerequisites
 
-### Data Sources
+- [Python 3.11+](https://www.python.org/)
+- [uv](https://docs.astral.sh/uv/) (Python package manager)
+- [Docker](https://www.docker.com/)
+- [Node.js](https://nodejs.org/) (for openlogs)
+- [openlogs](https://github.com/charlietlamb/openlogs)
+- [direnv](https://direnv.net/) (auto-loads secrets via `.envrc`)
+- [AWS CLI](https://aws.amazon.com/cli/) and [jq](https://stedolan.github.io/jq/) (used by `.envrc` to fetch secrets)
 
-This bot utilises live [BetFair Exchange](https://www.betfair.com.au/exchange/plus/) betting data.
+## Quick Start (Local)
 
-For this bot to function correctly I do collect some data from the users such as their last valid request. With this in mind I have created the means for the user to view their data `!my_data` and further more delete it from storage `!delete_data`.
+```bash
+direnv allow
+make install-dev
+make install-git-hooks
+make run
+```
 
-## Python and Dependencies
+Git commits run `black` and `ruff` through a pre-commit hook once installed.
 
-### Python Version
+## Commands
 
-This project is using `Python 3.7.0`.
+DM-only — the bot ignores any message in a guild channel.
 
-### Dependencies
+| Command       | Description                                                                |
+| ------------- | -------------------------------------------------------------------------- |
+| `!commands`   | Pin a list of available commands in the DM                                 |
+| `!clear`      | Delete the bot's own messages in the current DM                            |
+| `!sport`      | Interactive sport → event → market selector with probability breakdown     |
+| `!motorsport` | Shortcut to Motor Sport                                                    |
+| `!rugby`      | Shortcut to Rugby Union                                                    |
+| `!football`   | Shortcut to Soccer                                                         |
 
-The list of dependencies for this project can be found in `requirements.txt` and can be installed using `pip install -r requirements.txt`. To build a new `requirements.txt` delete the old version, navigate to directory and run `pip freeze > requirements.txt`.
+The bot is stateless — each request issues a fresh BetFair query.
 
-## Known Issues
+## Configuration
 
-### Local Permission Error
+| Variable               | Required | Default     | Description                                                          |
+| ---------------------- | -------- | ----------- | -------------------------------------------------------------------- |
+| `DISCORD_BOT_TOKEN`    | Yes      | —           | Discord bot token                                                    |
+| `BETFAIR_USERNAME`     | Yes      | —           | BetFair Exchange account username                                    |
+| `BETFAIR_PASSWORD`     | Yes      | —           | BetFair Exchange account password                                    |
+| `BETFAIR_LIVE_APP_KEY` | Yes      | —           | BetFair Live App Key                                                 |
+| `AWS_BUCKET_NAME`      | Yes      | —           | S3 bucket holding BetFair TLS certs under `sport-data-discord-bot/`  |
+| `AWS_REGION`           | No       | `eu-west-1` | Region of the bucket                                                 |
+| `HEALTH_PORT`          | No       | `4000`      | Health-check HTTP port                                               |
 
-Running the application locally will throw the error shown below.
+In prod, AWS credentials come from the ECS task role. Locally, `.envrc` pulls `DISCORD_BOT_TOKEN` from `local-sports-data-discord-bot` and `BETFAIR_*` from `prod-eu-west-1-betfair`, then writes a `.env` file consumed by `make docker-*`.
 
-![Permission Error](documentation_sources/permission_error.png)
+## Makefile Targets
 
-This will not occur when hosted live. It can be ignored but if you want to run it locally error free then comment out `os.remove(barplot_path)` and `os.remove(piechart_path)`.
+| Target                   | Description                        |
+| ------------------------ | ---------------------------------- |
+| `make docker-run`        | Build + run the bot in Docker      |
+| `make docker-dev`        | Build + run the bot                |
+| `make docker-test`       | Run pytest in Docker               |
+| `make docker-logs`       | Print latest docker bot/test logs  |
+| `make docker-build`      | Build the Docker image             |
+| `make docker-shell`      | Interactive shell in the container |
+| `make install-git-hooks` | Install the git pre-commit hook    |
+| `make run`               | Run the bot locally                |
+| `make test`              | Run pytest locally                 |
 
-## Running
+## Project Structure
 
-### AWS
-
-Pushing to the `master` branch will automatically cause the bot to refresh with the changes applied.
-
-**Ensure keys and user commands JSON are populated in connected Amazon S3 bucket.**
-
-**Do not delete `Procfile` and do not delete `.ebextensions` both are responsible for the running of the program, that is avoiding timeouts and restarting the instance daily (avoiding errors) accordingly.**
-
-As seen throughout the scripts, keys and secrets are all stored as environment variables in AWS.
+See [AGENTS.md](AGENTS.md) for architecture, patterns, and contributing conventions.

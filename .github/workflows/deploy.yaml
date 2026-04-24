@@ -1,0 +1,35 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy-tag:
+        description: "Image Tag:"
+        default: v2026.MM.DD-n
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+run-name: Deploy ${{ inputs.deploy-tag }}
+
+concurrency:
+  group: deploy-sport-data-discord-bot
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy
+    steps:
+      - name: Deploy to ECS
+        uses: Rhodri-Morgan/github-workflows/deploy-ecs@v2
+        with:
+          image-tag: ${{ inputs.deploy-tag }}
+          role-arn: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: eu-west-1
+          ecs-cluster: prod-eu-west-1-main
+          ecs-service: prod-eu-west-1-sport-data-discord-bot
+          image-ssm-parameter: prod-eu-west-1-sport-data-discord-bot-image-tag

@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+.envrc.local
+.direnv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.openlogs/
+temp_images/
+certifications/
+user_commands.json
+*.egg-info/
+dist/
+build/
+.tmp/
