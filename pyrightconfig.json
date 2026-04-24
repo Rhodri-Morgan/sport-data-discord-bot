@@ -1,6 +1,0 @@
-{
-  "typeCheckingMode": "standard",
-  "ignore": ["src/sport_data_bot/views.py", "src/sport_data_bot/bot.py"],
-  "reportOptionalMemberAccess": false,
-  "reportGeneralTypeIssues": false
-}
