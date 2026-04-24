@@ -1,0 +1,13 @@
+.git
+.venv
+__pycache__
+*.pyc
+.env
+.mypy_cache
+.pytest_cache
+.ruff_cache
+.openlogs
+temp_images
+certifications
+user_commands.json
+documentation_sources

@@ -1,0 +1,44 @@
+name: Build & Push to ECR
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+      - "v*.*.*-*"
+
+permissions:
+  id-token: write
+  contents: read
+
+run-name: Build and push image ${{ github.ref_name }}
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+    name: Build and push
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build image
+        id: build
+        uses: Rhodri-Morgan/github-workflows/build@v2
+        with:
+          image-repo: sport-data-discord-bot
+          image-tag: ${{ github.ref_name }}
+          aws-region: eu-west-1
+          account-id: ${{ secrets.AWS_ACCOUNT_ID }}
+          role-arn: ${{ secrets.AWS_ROLE_ARN }}
+          push-cache: "true"
+
+      - name: Run tests in built image
+        run: docker run --rm local/sport-data-discord-bot:${{ steps.build.outputs.image-tag }} make ci-test
+
+      - name: Push
+        uses: Rhodri-Morgan/github-workflows/push@v2
+        with:
+          image-repo: sport-data-discord-bot
+          image-tag: ${{ steps.build.outputs.image-tag }}
+          aws-region: eu-west-1
+          account-id: ${{ secrets.AWS_ACCOUNT_ID }}
+          role-arn: ${{ secrets.AWS_ROLE_ARN }}
