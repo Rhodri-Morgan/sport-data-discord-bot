@@ -1,6 +1,6 @@
 # Sport Data Discord Bot
 
-![deployed.png](https://img.shields.io/badge/-Deployed-green)
+![not-deployed.png](https://img.shields.io/badge/-Not%20Deployed-red)
 
 A Discord bot that pulls live odds from [BetFair Exchange](https://www.betfair.com.au/exchange/plus/) and DMs you implied probabilities for any sport, event, and market — with a runner-by-runner breakdown, bar and pie charts, and a market-efficiency score. Works across motor sport, rugby union, football, and anything else trading on the Exchange. Stateless: every request is a fresh query.
 
