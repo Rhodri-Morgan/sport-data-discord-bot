@@ -47,7 +47,7 @@ The bot is stateless — it does not persist anything per-user. Each request is 
 | `AWS_REGION`            | Region of the bucket (default `eu-west-1`)               |
 | `HEALTH_PORT`           | Health-check HTTP port (default `4000`)                  |
 
-In prod, AWS credentials come from the ECS task role — no static keys are passed to the container. Locally the `.envrc` (auto-loaded by direnv) pulls `DISCORD_BOT_TOKEN` from `local-sports-data-discord-bot` and `BETFAIR_*` from `prod-eu-west-1-betfair`, then writes a `.env` file consumed by `make docker-*`.
+In prod, AWS credentials come from the ECS task role — no static keys are passed to the container. Locally the `.envrc` (auto-loaded by direnv) pulls `DISCORD_BOT_TOKEN` from `local-eu-west-1-sport-data-discord-bot-discord-bot-token` and `BETFAIR_*` from the `prod-eu-west-1-betfair-*` SecureStrings, then writes a `.env` file consumed by `make docker-*`.
 
 ## Development
 
@@ -58,7 +58,7 @@ In prod, AWS credentials come from the ECS task role — no static keys are pass
 - [Docker](https://www.docker.com/)
 - [Node.js](https://nodejs.org/) (for openlogs)
 - [openlogs](https://github.com/charlietlamb/openlogs)
-- [direnv](https://direnv.net/) (auto-loads secrets from AWS Secrets Manager via `.envrc`)
+- [direnv](https://direnv.net/) (auto-loads secrets from AWS SSM Parameter Store via `.envrc`)
 
 ### Setup
 
