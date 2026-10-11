@@ -7,7 +7,7 @@ A Discord bot that pulls live odds from [BetFair Exchange](https://www.betfair.c
 ## Quick Start (Docker)
 
 ```bash
-direnv allow          # loads secrets from AWS Secrets Manager and writes .env
+direnv allow          # loads secrets from AWS SSM Parameter Store and writes .env
 make docker-run
 ```
 
@@ -19,7 +19,7 @@ make docker-run
 - [Node.js](https://nodejs.org/) (for openlogs)
 - [openlogs](https://github.com/charlietlamb/openlogs)
 - [direnv](https://direnv.net/) (auto-loads secrets via `.envrc`)
-- [AWS CLI](https://aws.amazon.com/cli/) and [jq](https://stedolan.github.io/jq/) (used by `.envrc` to fetch secrets)
+- [AWS CLI](https://aws.amazon.com/cli/) (used by `.envrc` to fetch secrets)
 
 ## Quick Start (Local)
 
@@ -57,7 +57,7 @@ The flow uses select menus and Prev/Next buttons. The bot is stateless — each 
 | `AWS_BUCKET_NAME`      | Yes      | —           | S3 bucket holding BetFair TLS certs under `sport-data-discord-bot/`  |
 | `HEALTH_PORT`          | No       | `4000`      | Health-check HTTP port                                               |
 
-In prod, AWS credentials come from the ECS task role. Locally, `.envrc` pulls `DISCORD_BOT_TOKEN` from `local-sports-data-discord-bot` and `BETFAIR_*` from `prod-eu-west-1-betfair`, then writes a `.env` file consumed by `make docker-*`.
+In prod, AWS credentials come from the ECS task role. Locally, `.envrc` pulls `DISCORD_BOT_TOKEN` from `local-eu-west-1-sport-data-discord-bot-discord-bot-token` and `BETFAIR_*` from the `prod-eu-west-1-betfair-*` SecureStrings, then writes a `.env` file consumed by `make docker-*`.
 
 ## Makefile Targets
 
